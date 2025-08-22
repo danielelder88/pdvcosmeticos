@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>PDV Cosméticos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; }
+    .menu { width:230px; min-height:100vh; background:#6f42c1; color:#fff; position:fixed; inset:0 auto 0 0; padding:20px; }
+    .menu h4{ text-align:center; margin-bottom:16px; }
+    .menu a{ display:block; color:#fff; text-decoration:none; padding:10px 12px; margin:6px 0; border-radius:10px; }
+    .menu a:hover{ background:#5a34a3; }
+    .content{ margin-left:250px; padding:20px; }
+    .card{ border-radius:16px; }
+    .total-box{ font-weight:700; }
+    #comprovante, #historico, #produtosCard{ display:none; }
+
+    /* === CUPOM NÃO FISCAL === */
+    @media print {
+      body * { visibility: hidden; }
+      #cupom, #cupom * { visibility: visible; }
+      #cupom {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;             /* bobina 80mm */
+        font-family: monospace;  /* estilo impressora */
+        font-size: 12px;
+        line-height: 1.3;
+      }
+      #cupom ul { padding-left:0; list-style:none; }
+      #cupom .list-group-item { border:0; padding:0; margin:0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- MENU -->
+  <aside class="menu">
+    <h4><i class="bi bi-shop"></i> PDV</h4>
+    <a onclick="toggleCard('vendasCard')"><i class="bi bi-cart"></i> Vendas</a>
+    <a onclick="toggleCard('produtosCard')"><i class="bi bi-box-seam"></i> Produtos</a>
+    <a onclick="toggleCard('historico')"><i class="bi bi-receipt"></i> Histórico</a>
+    <a onclick="toggleCard('comprovante')"><i class="bi bi-printer"></i> Comprovante</a>
+  </aside>
+
+  <main class="content">
+    <div class="container-fluid">
+      <h2 class="mb-4"><i class="bi bi-cart4"></i> Sistema PDV Cosméticos</h2>
+
+      <!-- CADASTRO PRODUTOS -->
+      <div id="produtosCard" class="card p-3 shadow-sm mb-3">
+        <h5><i class="bi bi-box"></i> Cadastro de Produtos</h5>
+        <input id="nome" class="form-control mb-2" placeholder="Nome do produto">
+        <input id="descricao" class="form-control mb-2" placeholder="Descrição">
+        <input id="preco" type="number" step="0.01" class="form-control mb-2" placeholder="Preço">
+        <input id="estoque" type="number" class="form-control mb-2" placeholder="Estoque">
+        <button class="btn btn-success w-100 mb-2" onclick="adicionarProduto()"><i class="bi bi-plus-circle"></i> Adicionar Produto</button>
+        <ul id="listaProdutos" class="list-group"></ul>
+      </div>
+
+      <!-- VENDAS -->
+      <div id="vendasCard" class="card p-3 shadow-sm mb-3">
+        <h5><i class="bi bi-cart-check"></i> Vendas</h5>
+        <select id="selectProduto" class="form-select mb-2"></select>
+        <input id="quantidadeVenda" type="number" class="form-control mb-2" placeholder="Qtd" min="1">
+        <button class="btn btn-primary w-100 mb-2" onclick="adicionarCarrinho()"><i class="bi bi-cart-plus"></i> Adicionar ao Carrinho</button>
+        <ul id="carrinho" class="list-group mb-2"></ul>
+        <p class="total-box">Total: R$ <span id="total">0.00</span></p>
+
+        <select id="formaPagamento" class="form-select mb-2" onchange="toggleTroco()">
+          <option value="dinheiro">Dinheiro</option>
+          <option value="pix">PIX</option>
+          <option value="credito">Cartão de Crédito</option>
+          <option value="debito">Cartão de Débito</option>
+        </select>
+        <div id="pagamentoDinheiro">
+          <input id="valorPago" type="number" class="form-control mb-2" placeholder="Valor Pago pelo cliente">
+          <p class="total-box text-success">Troco: R$ <span id="troco">0.00</span></p>
+        </div>
+        <button class="btn btn-success w-100" onclick="finalizarVenda()"><i class="bi bi-receipt-cutoff"></i> Finalizar Venda</button>
+      </div>
+
+      <!-- COMPROVANTE -->
+      <div id="comprovante" class="card p-3 shadow-sm mb-3">
+        <div id="cupom">
+          <h5 class="text-center mb-1">DRICCA COSMÉTICOS</h5>
+          <p class="text-center">CNPJ: 00.000.000/0001-00</p>
+          <p class="text-center">-------------------------------</p>
+          <ul id="itensComprovante" class="list-group mb-2"></ul>
+          <p>-------------------------------</p>
+          <p><strong>Total:</strong> R$ <span id="totalComprovante"></span></p>
+          <p><strong>Pago:</strong> R$ <span id="pagoComprovante"></span></p>
+          <p><strong>Troco:</strong> R$ <span id="trocoComprovante"></span></p>
+          <p><strong>Pagamento:</strong> <span id="formaPagamentoComprovante"></span></p>
+          <p>-------------------------------</p>
+          <p class="text-center" id="dataHora"></p>
+        </div>
+        <button class="btn btn-secondary w-100 mt-2" onclick="imprimirCupom()"><i class="bi bi-printer"></i> Imprimir Cupom</button>
+      </div>
+
+      <!-- HISTÓRICO -->
+      <div id="historico" class="card p-3 shadow-sm mb-3">
+        <h5><i class="bi bi-clock-history"></i> Histórico</h5>
+        <input type="month" id="filtroMes" class="form-control mb-2" onchange="filtrarHistoricoMes()">
+        <button class="btn btn-secondary mb-2" onclick="imprimirHistorico()"><i class="bi bi-printer"></i> Imprimir Histórico</button>
+        <ul id="listaHistorico" class="list-group"></ul>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } 
+      from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD19k85uFxX3lBVn1zPkcpBoJwXYkeFAeg",
+      authDomain: "pdvcosmeticos-3e89a.firebaseapp.com",
+      projectId: "pdvcosmeticos-3e89a",
+      storageBucket: "pdvcosmeticos-3e89a.firebasestorage.app",
+      messagingSenderId: "633459331595",
+      appId: "1:633459331595:web:a9a5b2128071b50a4f2d0e"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    let produtos=[], carrinho=[], historico=[], total=0;
+
+    // Alternar telas
+    window.toggleCard = function(id){
+      ['vendasCard','produtosCard','comprovante','historico'].forEach(c=>{
+        const el=document.getElementById(c); if(el) el.style.display='none';
+      });
+      document.getElementById(id).style.display='block';
+    }
+
+    // Toggle troco
+    window.toggleTroco = function(){
+      document.getElementById("pagamentoDinheiro").style.display =
+        (document.getElementById("formaPagamento").value==="dinheiro") ? "block" : "none";
+    }
+
+    // CRUD Produtos
+    window.adicionarProduto = async function(){
+      const nome=document.getElementById('nome').value;
+      const descricao=document.getElementById('descricao').value;
+      const preco=parseFloat(document.getElementById('preco').value);
+      const estoque=parseInt(document.getElementById('estoque').value);
+      if(!nome||!preco||!estoque) return alert("Preencha corretamente!");
+      await addDoc(collection(db,"produtos"),{nome,descricao,preco,estoque});
+      carregarProdutos();
+    }
+    async function carregarProdutos(){
+      const querySnapshot=await getDocs(collection(db,"produtos"));
+      produtos=[]; querySnapshot.forEach(docSnap=>{
+        produtos.push({id:docSnap.id,...docSnap.data()});
+      });
+      atualizarListaProdutos();
+    }
+    window.atualizarListaProdutos=function(){
+      const select=document.getElementById('selectProduto');
+      select.innerHTML=''; produtos.forEach((p,i)=>{
+        select.innerHTML+=`<option value="${i}">${p.nome} - R$${p.preco.toFixed(2)} (${p.estoque})</option>`;
+      });
+      const lista=document.getElementById('listaProdutos');
+      lista.innerHTML=''; produtos.forEach((p,i)=>{
+        lista.innerHTML+=`<li class="list-group-item d-flex justify-content-between align-items-center">
+          ${p.nome} - R$${p.preco.toFixed(2)} (${p.estoque})
+          <div>
+            <button class="btn btn-sm btn-warning" onclick="editarProduto('${p.id}')"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="excluirProduto('${p.id}')"><i class="bi bi-trash"></i></button>
+          </div></li>`;
+      });
+    }
+    window.editarProduto=async function(id){
+      const produto=produtos.find(p=>p.id===id);
+      const novoNome=prompt("Novo nome:",produto.nome);
+      if(novoNome){
+        await updateDoc(doc(db,"produtos",id),{nome:novoNome});
+        carregarProdutos();
+      }
+    }
+    window.excluirProduto=async function(id){
+      if(confirm("Excluir produto?")){
+        await deleteDoc(doc(db,"produtos",id));
+        carregarProdutos();
+      }
+    }
+
+    // Carrinho
+    window.adicionarCarrinho=function(){
+      const index=parseInt(document.getElementById('selectProduto').value);
+      const qtd=parseInt(document.getElementById('quantidadeVenda').value);
+      if(produtos[index] && qtd>0 && produtos[index].estoque>=qtd){
+        carrinho.push({...produtos[index],qtd});
+        total+=produtos[index].preco*qtd;
+        document.getElementById('total').textContent=total.toFixed(2);
+        atualizarCarrinho();
+      }
+    }
+    window.atualizarCarrinho=function(){
+      const lista=document.getElementById('carrinho'); lista.innerHTML='';
+      carrinho.forEach((p,i)=>{
+        lista.innerHTML+=`<li class="list-group-item d-flex justify-content-between align-items-center">
+          ${p.nome} - R$${p.preco.toFixed(2)} x ${p.qtd}
+          <div>
+            <button class="btn btn-sm btn-warning" onclick="editarCarrinho(${i})"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="removerDoCarrinho(${i})"><i class="bi bi-trash"></i></button>
+          </div></li>`;
+      });
+    }
+    window.editarCarrinho=function(i){
+      const novoQtd=parseInt(prompt("Qtd:",carrinho[i].qtd));
+      if(novoQtd>0){
+        total-=carrinho[i].preco*carrinho[i].qtd;
+        carrinho[i].qtd=novoQtd;
+        total+=carrinho[i].preco*novoQtd;
+        document.getElementById('total').textContent=total.toFixed(2);
+        atualizarCarrinho();
+      }
+    }
+    window.removerDoCarrinho=function(i){
+      total-=carrinho[i].preco*carrinho[i].qtd;
+      carrinho.splice(i,1);
+      document.getElementById('total').textContent=total.toFixed(2);
+      atualizarCarrinho();
+    }
+
+    // Vendas
+    window.finalizarVenda=async function(){
+      const forma=document.getElementById('formaPagamento').value;
+      let valorPago=total, troco=0;
+      if(forma==="dinheiro"){
+        valorPago=parseFloat(document.getElementById('valorPago').value);
+        if(isNaN(valorPago)||valorPago<total) return alert("Valor insuficiente!");
+        troco=valorPago-total;
+      }
+      const venda = {
+  itens: [...carrinho],
+  total,
+  pago: valorPago,
+  troco,
+  forma,
+  data: new Date().toISOString()
+};
+
+// Salva venda no histórico
+await addDoc(collection(db, "historico"), venda);
+historico.push(venda);
+atualizarHistorico();
+
+// Atualiza estoque no Firestore
+for (let item of carrinho) {
+  const produtoRef = doc(db, "produtos", item.id);
+  const novoEstoque = item.estoque - item.qtd;
+  await updateDoc(produtoRef, { estoque: novoEstoque });
+}
+
+// Recarrega produtos para refletir estoque atualizado
+await carregarProdutos();
+
+      // Preenche cupom
+      toggleCard('comprovante');
+      document.getElementById('itensComprovante').innerHTML=
+        carrinho.map(p=>`<li class="list-group-item">${p.nome} - R$${p.preco.toFixed(2)} x ${p.qtd}</li>`).join('');
+      document.getElementById('totalComprovante').textContent=total.toFixed(2);
+      document.getElementById('pagoComprovante').textContent=valorPago.toFixed(2);
+      document.getElementById('trocoComprovante').textContent=troco.toFixed(2);
+      document.getElementById('formaPagamentoComprovante').textContent=forma.toUpperCase();
+      document.getElementById('dataHora').textContent=new Date().toLocaleString();
+      carrinho=[]; total=0;
+      document.getElementById('total').textContent="0.00";
+      atualizarCarrinho();
+      document.getElementById('valorPago').value='';
+    }
+    window.imprimirCupom=function(){ window.print(); }
+
+    // Histórico
+    async function carregarHistorico(){
+      const querySnapshot=await getDocs(collection(db,"historico"));
+      historico=[]; querySnapshot.forEach(docSnap=>{
+        historico.push({id:docSnap.id,...docSnap.data()});
+      });
+      atualizarHistorico();
+    }
+    window.atualizarHistorico=function(){
+      const lista=document.getElementById('listaHistorico'); lista.innerHTML='';
+      historico.forEach((v,i)=>{
+        lista.innerHTML+=`<li class="list-group-item">
+          Venda ${i+1} - R$${v.total?.toFixed(2)} 
+          - ${(v.forma?v.forma.toUpperCase():"N/A")} 
+          - ${v.data?new Date(v.data).toLocaleString():""}
+        </li>`;
+      });
+    }
+    window.filtrarHistoricoMes=function(){
+      const mes=document.getElementById('filtroMes').value;
+      if(!mes) return;
+      const lista=document.getElementById('listaHistorico'); lista.innerHTML='';
+      historico.filter(v=>v.data?.startsWith(mes)).forEach(v=>{
+        lista.innerHTML+=`<li class="list-group-item">
+          R$${v.total?.toFixed(2)} - ${(v.forma?v.forma.toUpperCase():"N/A")} - ${new Date(v.data).toLocaleDateString()}
+        </li>`;
+      });
+    }
+    window.imprimirHistorico=function(){ window.print(); }
+
+    // Inicialização
+    await carregarProdutos();
+    await carregarHistorico();
+    toggleTroco();
+    toggleCard('vendasCard');
+  </script>
+</body>
+</html>
