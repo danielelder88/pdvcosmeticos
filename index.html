@@ -31,6 +31,7 @@
     <a onclick="toggleCard('historico',this)"><i class="bi bi-receipt"></i> Histórico</a>
     <a onclick="toggleCard('caixaCard',this)"><i class="bi bi-cash-coin"></i> Caixa</a>
     <a onclick="toggleCard('comprovante',this)"><i class="bi bi-printer"></i> Comprovante</a>
+    <a onclick="toggleCard('configCard',this)"><i class="bi bi-gear"></i> Configurações</a>
   </aside>
   <main class="content">
     <div class="container-fluid">
@@ -125,6 +126,25 @@
         <h5>Caixa</h5>
         <div>Saldo: R$ <span id="saldoCaixa">0.00</span></div>
       </div>
+
+      <!-- Configurações -->
+      <div id="configCard" class="card p-3 mb-3" style="display:none">
+        <h5>Configurações da Loja</h5>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label>Nome da Loja</label>
+            <input id="configNome" class="form-control" placeholder="Ex: Minha Loja">
+          </div>
+          <div class="col-md-6">
+            <label>CNPJ</label>
+            <input id="configCnpj" class="form-control" placeholder="00.000.000/0001-00">
+          </div>
+        </div>
+        <div class="mt-3">
+          <button class="btn btn-success" onclick="salvarConfig()"><i class="bi bi-save"></i> Salvar Configurações</button>
+        </div>
+      </div>
+
     </div>
   </main>
 
@@ -133,10 +153,28 @@ const STORAGE_PROD='pdv_produtos',STORAGE_HIST='pdv_hist';
 let produtos=JSON.parse(localStorage.getItem(STORAGE_PROD)||'[]');
 let historico=JSON.parse(localStorage.getItem(STORAGE_HIST)||'[]');
 let carrinho=[],total=0,saldoCaixa=0,editingIndex=null;
+
+// Configurações da Loja
+let EMPRESA_NOME = localStorage.getItem("pdv_nome") || "DRICCA COSMÉTICOS";
+let EMPRESA_CNPJ = localStorage.getItem("pdv_cnpj") || "00.000.000/0001-00";
+
+document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("configNome").value = EMPRESA_NOME;
+  document.getElementById("configCnpj").value = EMPRESA_CNPJ;
+});
+
+function salvarConfig(){
+  EMPRESA_NOME = document.getElementById("configNome").value || EMPRESA_NOME;
+  EMPRESA_CNPJ = document.getElementById("configCnpj").value || EMPRESA_CNPJ;
+  localStorage.setItem("pdv_nome", EMPRESA_NOME);
+  localStorage.setItem("pdv_cnpj", EMPRESA_CNPJ);
+  alert("Configurações salvas com sucesso!");
+}
+
 const BRL=v=>(Number(v||0)).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
 function toggleCard(id,el){
- ['dashboardCard','vendasCard','produtosCard','comprovante','historico','caixaCard'].forEach(c=>{
+ ['dashboardCard','vendasCard','produtosCard','comprovante','historico','caixaCard','configCard'].forEach(c=>{
   const e=document.getElementById(c);if(e)e.style.display='none';
  });
  document.querySelectorAll('.menu a').forEach(a=>a.classList.remove('active'));
@@ -187,19 +225,21 @@ function finalizarVenda(){
  renderHistorico();gerarCupom(venda);toggleCard('comprovante',document.querySelector('[onclick*="comprovante"]'));
  carrinho=[];renderCarrinho();document.getElementById('saldoCaixa').textContent=BRL(saldoCaixa);
 }
-function gerarCupom(v){let c=document.getElementById('cupom');let line='-----------------------------';let txt='DRICCA COSMÉTICOS\nCNPJ:00.000.000/0001-00\n'+line+'\n';v.itens.forEach(it=>{txt+=`${it.nome}\n ${it.qtd} x ${BRL(it.preco)} = ${BRL(it.preco*it.qtd)}\n`;});txt+=line+`\nTOTAL:${BRL(v.total)}\nPAGO:${BRL(v.pago)}\nTROCO:${BRL(v.troco)}\nFORMA:${v.forma}\n${line}\n${new Date(v.data).toLocaleString()}\nObrigado!`;c.textContent=txt;}
+function gerarCupom(v){let c=document.getElementById('cupom');let line='-----------------------------';let txt=`${EMPRESA_NOME}\nCNPJ:${EMPRESA_CNPJ}\n${line}\n`;v.itens.forEach(it=>{txt+=`${it.nome}\n ${it.qtd} x ${BRL(it.preco)} = ${BRL(it.preco*it.qtd)}\n`;});txt+=line+`\nTOTAL:${BRL(v.total)}\nPAGO:${BRL(v.pago)}\nTROCO:${BRL(v.troco)}\nFORMA:${v.forma}\n${line}\n${new Date(v.data).toLocaleString()}\nObrigado!`;c.textContent=txt;}
 function imprimirCupom(){window.print();}
 function renderHistorico(){let ul=document.getElementById('tHistorico');ul.innerHTML='';historico.forEach(h=>{ul.innerHTML+=`<li class='list-group-item'>${new Date(h.data).toLocaleString()} - ${BRL(h.total)} - ${h.forma}</li>`});atualizarDashboard();}
 function aplicarFiltros(){atualizarDashboard();}
 function atualizarDashboard(){
  let ano=document.getElementById('filtroAno').value;let mes=document.getElementById('filtroMes').value;let dia=document.getElementById('filtroDia').value;
- let vendasFiltradas=historico.filter(h=>{let d=new Date(h.data);return(!ano||d.getFullYear()==ano)&&(!mes||d.getMonth()+1==mes)&&(!dia||d.getDate()==dia);});
- document.getElementById('dashVendas').textContent=vendasFiltradas.length;
- document.getElementById('dashFaturamento').textContent=BRL(vendasFiltradas.reduce((s,h)=>s+h.total,0));
- // grafico barras
- let dias={},produtosCont={};vendasFiltradas.forEach(h=>{let d=new Date(h.data).getDate();dias[d]=(dias[d]||0)+h.total;h.itens.forEach(i=>{produtosCont[i.nome]=(produtosCont[i.nome]||0)+i.qtd;});});
- let ctx=document.getElementById('graficoBarras').getContext('2d');if(window.graf1)window.graf1.destroy();window.graf1=new Chart(ctx,{type:'bar',data:{labels:Object.keys(dias),datasets:[{label:'Faturamento',data:Object.values(dias)}]}});
- let ctx2=document.getElementById('graficoPizza').getContext('2d');if(window.graf2)window.graf2.destroy();window.graf2=new Chart(ctx2,{type:'pie',data:{labels:Object.keys(produtosCont),datasets:[{data:Object.values(produtosCont)}]}});
+ let filtrados=historico.filter(h=>{let d=new Date(h.data);if(ano&&d.getFullYear()!=ano)return false;if(mes&&d.getMonth()+1!=mes)return false;if(dia&&d.getDate()!=dia)return false;return true;});
+ document.getElementById('dashVendas').textContent=filtrados.length;
+ document.getElementById('dashFaturamento').textContent=BRL(filtrados.reduce((s,h)=>s+h.total,0));
+ // gráfico de barras
+ let ctx=document.getElementById('graficoBarras').getContext('2d');if(window.chartBarras)window.chartBarras.destroy();
+ let dias={};filtrados.forEach(h=>{let d=new Date(h.data).getDate();dias[d]=(dias[d]||0)+h.total;});window.chartBarras=new Chart(ctx,{type:'bar',data:{labels:Object.keys(dias),datasets:[{label:'Faturamento',data:Object.values(dias),backgroundColor:'#6f42c1'}]}});
+ // pizza
+ let ctx2=document.getElementById('graficoPizza').getContext('2d');if(window.chartPizza)window.chartPizza.destroy();
+ let produtosCont={};filtrados.forEach(h=>h.itens.forEach(i=>{produtosCont[i.nome]=(produtosCont[i.nome]||0)+i.qtd;}));window.chartPizza=new Chart(ctx2,{type:'pie',data:{labels:Object.keys(produtosCont),datasets:[{data:Object.values(produtosCont)}]}});
 }
 renderProdutos();renderHistorico();atualizarDashboard();toggleTroco();
 </script>
