@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>PDV Cosméticos — Completo</title>
+  <meta charset="utf-8" />
+  <title>PDV Cosméticos — Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6f42c1">
+
   <style>
     :root{--roxao:#6f42c1}
     body{background:#f8f9fa}
@@ -15,7 +18,8 @@
     .menu a.active,.menu a:hover{background:#55339e}
     .content{margin-left:280px;padding:20px}
     .card{border-radius:14px}
-    #comprovante,#historico,#produtosCard,#caixaCard,#vendasCard,#configCard{display:none}
+    /* Esconder cartões por padrão (serão mostrados via toggleCard) */
+    #dashboardCard,#vendasCard,#produtosCard,#clientesCard,#relatoriosCard,#historico,#caixaCard,#comprovante,#configCard{display:none}
     /* Cupom não fiscal */
     #cupom{font-family:monospace;white-space:pre-wrap;background:#fff;padding:10px;border:1px dashed #ccc;max-width:360px;margin:auto}
     @media print{
@@ -23,69 +27,99 @@
       #cupom,#cupom *{visibility:visible}
       #cupom{position:absolute;left:0;top:0;width:80mm;font-size:12px;line-height:1.3}
     }
+    @media (max-width: 768px) {
+      .content { margin-left: 0; margin-top: 70px; }
+      .menu{display:none}
+    }
+    .fab{ position:fixed; right:16px; bottom:16px; z-index:1050; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,0,0,.18); }
   </style>
 </head>
 <body>
-  <!-- MENU -->
-  <aside class="menu">
+  <!-- NAVBAR MOBILE -->
+  <nav class="navbar navbar-dark bg-primary d-md-none">
+    <div class="container-fluid">
+      <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuMobile">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <span class="navbar-brand mb-0 h5">PDV Cosméticos</span>
+    </div>
+  </nav>
+
+  <!-- MENU DESKTOP -->
+  <aside class="menu d-none d-md-block">
     <h4 class="mb-3"><i class="bi bi-shop"></i> PDV</h4>
     <a onclick="toggleCard('dashboardCard',this)" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a>
     <a onclick="toggleCard('vendasCard',this)"><i class="bi bi-cart"></i> Vendas</a>
     <a onclick="toggleCard('produtosCard',this)"><i class="bi bi-box-seam"></i> Produtos</a>
+    <a onclick="toggleCard('clientesCard',this)"><i class="bi bi-people"></i> Clientes</a>
+    <a onclick="toggleCard('relatoriosCard',this)"><i class="bi bi-graph-up-arrow"></i> Relatórios</a>
     <a onclick="toggleCard('historico',this)"><i class="bi bi-receipt"></i> Histórico</a>
     <a onclick="toggleCard('caixaCard',this)"><i class="bi bi-cash-coin"></i> Caixa</a>
     <a onclick="toggleCard('comprovante',this)"><i class="bi bi-printer"></i> Comprovante</a>
     <a onclick="toggleCard('configCard',this)"><i class="bi bi-gear"></i> Configurações</a>
   </aside>
 
+  <!-- MENU MOBILE (Offcanvas) -->
+  <div class="offcanvas offcanvas-start bg-primary text-white" tabindex="-1" id="menuMobile">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title"><i class="bi bi-shop"></i> PDV</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+      <a onclick="toggleCard('dashboardCard',this)" class="d-block text-white mb-2"><i class="bi bi-speedometer2"></i> Dashboard</a>
+      <a onclick="toggleCard('vendasCard',this)" class="d-block text-white mb-2"><i class="bi bi-cart"></i> Vendas</a>
+      <a onclick="toggleCard('produtosCard',this)" class="d-block text-white mb-2"><i class="bi bi-box-seam"></i> Produtos</a>
+      <a onclick="toggleCard('clientesCard',this)" class="d-block text-white mb-2"><i class="bi bi-people"></i> Clientes</a>
+      <a onclick="toggleCard('relatoriosCard',this)" class="d-block text-white mb-2"><i class="bi bi-graph-up-arrow"></i> Relatórios</a>
+      <a onclick="toggleCard('historico',this)" class="d-block text-white mb-2"><i class="bi bi-receipt"></i> Histórico</a>
+      <a onclick="toggleCard('caixaCard',this)" class="d-block text-white mb-2"><i class="bi bi-cash-coin"></i> Caixa</a>
+      <a onclick="toggleCard('comprovante',this)" class="d-block text-white mb-2"><i class="bi bi-printer"></i> Comprovante</a>
+      <a onclick="toggleCard('configCard',this)" class="d-block text-white mb-2"><i class="bi bi-gear"></i> Configurações</a>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO -->
   <main class="content">
     <div class="container-fluid">
       <h2 class="mb-3 d-flex align-items-center gap-2">
-        <i class="bi bi-cart4"></i> PDV Cosméticos — Completo
-        <span class="badge bg-light text-dark">Pro</span>
+        <i class="bi bi-cart4"></i> PDV Cosméticos — Pro
+        <span class="badge bg-light text-dark">Novo</span>
       </h2>
 
       <!-- DASHBOARD -->
-      <div id="dashboardCard">
-        <div class="card p-3 mb-3">
-          <div class="row g-2">
-            <div class="col-md-3"><input id="fAno" class="form-control" type="number" placeholder="Ano"></div>
-            <div class="col-md-3"><input id="fMes" class="form-control" type="number" placeholder="Mês (1-12)"></div>
-            <div class="col-md-3"><input id="fDia" class="form-control" type="number" placeholder="Dia"></div>
-            <div class="col-md-3 d-grid">
-              <button class="btn btn-primary" onclick="aplicarFiltrosDashboard()"><i class="bi bi-funnel"></i> Aplicar filtros</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="row g-3 mb-3">
-          <div class="col-md-3"><div class="card p-3">Vendas: <strong id="dashVendas">0</strong></div></div>
-          <div class="col-md-3"><div class="card p-3">Faturamento: <strong id="dashFaturamento">R$ 0,00</strong></div></div>
-          <div class="col-md-3"><div class="card p-3">Itens estoque: <strong id="dashItens">0</strong></div></div>
-          <div class="col-md-3"><div class="card p-3">Baixo estoque: <strong id="dashBaixo">0</strong></div></div>
-        </div>
-
+      <div id="dashboardCard" class="card p-3">
         <div class="row g-3">
-          <div class="col-md-6"><canvas id="graficoBarras"></canvas></div>
-          <div class="col-md-6"><canvas id="graficoPizza"></canvas></div>
+          <div class="col-6 col-md-3"><div class="card p-3 text-center"><div class="small text-muted">Vendas (Mês)</div><div class="fs-4 fw-bold" id="kpiVendasMes">0</div></div></div>
+          <div class="col-6 col-md-3"><div class="card p-3 text-center"><div class="small text-muted">Faturamento (Mês)</div><div class="fs-4 fw-bold" id="kpiFatMes">R$ 0,00</div></div></div>
+          <div class="col-6 col-md-3"><div class="card p-3 text-center"><div class="small text-muted">Clientes</div><div class="fs-4 fw-bold" id="kpiClientes">0</div></div></div>
+          <div class="col-6 col-md-3"><div class="card p-3 text-center"><div class="small text-muted">Produtos</div><div class="fs-4 fw-bold" id="kpiProdutos">0</div></div></div>
         </div>
-
-        <div class="d-flex justify-content-end mt-3">
-          <button class="btn btn-outline-primary" onclick="imprimirDashboard()"><i class="bi bi-printer"></i> Imprimir Dashboard</button>
-        </div>
+        <div class="mt-3 card p-3" style="height:260px;"><canvas id="chartMes"></canvas></div>
       </div>
 
-      <!-- VENDAS -->
+      <!-- VENDAS (MANTIVE E ADAPTEI) -->
       <div id="vendasCard" class="card p-3">
         <h5>Vendas</h5>
         <div class="row">
           <div class="col-md-6 border-end">
-            <input id="buscaVenda" class="form-control mb-2" placeholder="Buscar por nome/descrição/código..." oninput="filtrarSelectProdutos()">
-            <input id="scanBarras" class="form-control mb-2" placeholder="Passe o leitor de código e tecle Enter" onkeydown="buscarPorBarrasVendas(event)">
-            <select id="selectProduto" class="form-select mb-2"></select>
-            <input id="quantidadeVenda" type="number" value="1" min="1" class="form-control mb-2">
-            <button class="btn btn-primary w-100" onclick="adicionarCarrinho()"><i class="bi bi-plus-circle"></i> Adicionar</button>
+            <div class="mb-2"><input id="buscaVenda" class="form-control" placeholder="Buscar produto..." oninput="filtrarSelectProdutos()"></div>
+            <div class="mb-2"><input id="scanBarras" class="form-control" placeholder="Passe o leitor de código e tecle Enter" onkeydown="buscarPorBarrasVendas(event)"></div>
+            <div class="mb-2"><select id="selectProduto" class="form-select"></select></div>
+            <div class="mb-2 d-flex gap-2">
+              <input id="quantidadeVenda" type="number" value="1" min="1" class="form-control">
+              <button class="btn btn-primary" onclick="adicionarCarrinho()"><i class="bi bi-plus-circle"></i></button>
+            </div>
+            <div class="mb-2">
+              <label>Cliente (opcional)</label>
+              <select id="selectCliente" class="form-select">
+                <option value="">Não vincular</option>
+              </select>
+            </div>
+            <div class="d-grid">
+              <button class="btn btn-success btn-lg" onclick="finalizarVenda()"><i class="bi bi-check2-circle"></i> Finalizar Venda</button>
+            </div>
           </div>
+
           <div class="col-md-6">
             <ul id="listaCarrinho" class="list-group mb-2"></ul>
             <div class="fw-bold">Total: <span id="total">R$ 0,00</span></div>
@@ -98,12 +132,9 @@
               </select>
               <div id="pagamentoDinheiro">
                 <label>Valor pago</label>
-                <input id="valorPago" type="number" step="0.01" class="form-control">
+                <input id="valorPago" type="number" step="0.01" class="form-control" oninput="calcularTroco()">
                 <div>Troco: <span id="troco">R$ 0,00</span></div>
               </div>
-              <button class="btn btn-success btn-lg w-100 mt-3" onclick="finalizarVenda()">
-                <i class="bi bi-check2-circle"></i> Finalizar Venda
-              </button>
             </div>
           </div>
         </div>
@@ -115,7 +146,7 @@
         <div class="row g-2">
           <div class="col-md-4"><input id="nomeProduto" class="form-control" placeholder="Nome"></div>
           <div class="col-md-4"><input id="descricaoProduto" class="form-control" placeholder="Descrição"></div>
-          <div class="col-md-4"><input id="codigoProduto" class="form-control" placeholder="Código de Barras (escaneie ou digite)"></div>
+          <div class="col-md-4"><input id="codigoProduto" class="form-control" placeholder="Código de Barras"></div>
         </div>
         <div class="row g-2 mt-2">
           <div class="col-md-3"><input id="precoProduto" type="number" step="0.01" class="form-control" placeholder="Preço"></div>
@@ -131,470 +162,553 @@
         </table>
       </div>
 
+      <!-- CLIENTES -->
+      <div id="clientesCard" class="card p-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <h5><i class="bi bi-people"></i> Clientes</h5>
+          <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#novoCliente"><i class="bi bi-person-plus"></i> Novo</button>
+        </div>
+
+        <div id="novoCliente" class="collapse mt-2">
+          <div class="card p-3">
+            <div class="row g-2">
+              <div class="col-md-4"><input id="cliNome" class="form-control" placeholder="Nome completo"></div>
+              <div class="col-md-3"><input id="cliTelefone" class="form-control" placeholder="Telefone (somente números)"></div>
+              <div class="col-md-3"><input id="cliCpf" class="form-control" placeholder="CPF/CNPJ"></div>
+              <div class="col-md-2 d-grid"><button class="btn btn-success" onclick="salvarCliente()"><i class="bi bi-save"></i> Salvar</button></div>
+              <div class="col-12 mt-2"><input id="cliEmail" class="form-control" placeholder="E-mail (opcional)"></div>
+              <div class="col-12 mt-2"><textarea id="cliObs" class="form-control" rows="2" placeholder="Observações"></textarea></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-sm align-middle">
+            <thead><tr><th>Nome</th><th>Telefone</th><th>CPF/CNPJ</th><th>E-mail</th><th>Compras</th><th>Ações</th></tr></thead>
+            <tbody id="tbClientes"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RELATÓRIOS -->
+      <div id="relatoriosCard" class="card p-3">
+        <h5><i class="bi bi-graph-up-arrow"></i> Relatórios</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card p-3" style="height:300px;"><div class="fw-semibold mb-2">Faturamento últimos 12 meses</div><canvas id="chartFatMes"></canvas></div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3" style="height:300px;"><div class="fw-semibold mb-2">Top Produtos (Qtd)</div><canvas id="chartTopProdutos"></canvas></div>
+          </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+          <button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir/Salvar PDF</button>
+          <button class="btn btn-outline-primary" onclick="exportarRelatorioCSV()"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV</button>
+        </div>
+      </div>
+
       <!-- HISTÓRICO -->
       <div id="historico" class="card p-3">
-        <h5>Histórico de Vendas</h5>
-        <div class="row g-2 mb-2">
-          <div class="col-md-3"><input id="hAno" class="form-control" type="number" placeholder="Ano"></div>
-          <div class="col-md-3"><input id="hMes" class="form-control" type="number" placeholder="Mês (1-12)"></div>
-          <div class="col-md-3"><input id="hDia" class="form-control" type="number" placeholder="Dia"></div>
-          <div class="col-md-3 d-grid"><button class="btn btn-primary" onclick="aplicarFiltrosHistorico()"><i class="bi bi-funnel"></i> Filtrar</button></div>
-        </div>
-        <div class="mb-2 d-flex gap-2">
-          <button class="btn btn-outline-success" onclick="exportarCSV()"><i class="bi bi-file-earmark-excel"></i> Exportar CSV</button>
-          <button class="btn btn-outline-primary" onclick="imprimirRelatorio()"><i class="bi bi-printer"></i> Imprimir Relatório</button>
-        </div>
-        <ul id="tHistorico" class="list-group"></ul>
+        <h5><i class="bi bi-receipt"></i> Histórico de Vendas</h5>
+        <div id="listaHistorico" class="mt-2"></div>
       </div>
 
       <!-- CAIXA -->
       <div id="caixaCard" class="card p-3">
-        <h5>Caixa</h5>
-        <div class="row g-2">
-          <div class="col-md-4">
-            <select id="tipoMov" class="form-select">
-              <option value="entrada">Entrada</option>
-              <option value="saida">Saída</option>
-            </select>
-          </div>
-          <div class="col-md-4"><input id="valorMov" type="number" step="0.01" class="form-control" placeholder="Valor"></div>
-          <div class="col-md-4"><input id="descMov" class="form-control" placeholder="Descrição"></div>
-        </div>
-        <div class="d-flex gap-2 mt-2">
-          <button class="btn btn-success" onclick="registrarMovimento()"><i class="bi bi-plus-circle"></i> Registrar</button>
-          <button class="btn btn-outline-primary" onclick="imprimirCaixa()"><i class="bi bi-printer"></i> Imprimir Caixa</button>
-        </div>
-        <div class="mt-3">Saldo atual: <strong id="saldoCaixa">R$ 0,00</strong></div>
-        <ul id="listaCaixa" class="list-group mt-2"></ul>
+        <h5><i class="bi bi-cash-coin"></i> Caixa</h5>
+        <div class="mb-2">Saldo atual: <strong id="saldoCaixa">R$ 0,00</strong></div>
+        <ul id="listaCaixa" class="list-group"></ul>
       </div>
 
       <!-- COMPROVANTE -->
       <div id="comprovante" class="card p-3">
-        <h5>Comprovante</h5>
-        <div id="cupom"></div>
-        <div class="mt-2 d-flex gap-2 justify-content-center">
-          <button class="btn btn-success" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</button>
-          <button class="btn btn-outline-secondary" onclick="toggleCard('vendasCard',document.querySelector('.menu a:nth-child(3)'))">Voltar às Vendas</button>
+        <h5><i class="bi bi-printer"></i> Cupom</h5>
+        <div id="cupom">Selecione uma venda no histórico para ver o cupom aqui.</div>
+        <div class="mt-3 row g-2">
+          <div class="col-md-4"><input id="wppTelefone" class="form-control" placeholder="WhatsApp com DDD (ex: 93999999999)"></div>
+          <div class="col-md-3 d-grid"><button class="btn btn-success" onclick="enviarWhatsApp()"><i class="bi bi-whatsapp"></i> Enviar Cupom</button></div>
+          <div class="col-md-3 d-grid"><button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</button></div>
         </div>
       </div>
 
       <!-- CONFIG -->
       <div id="configCard" class="card p-3">
-        <h5>Configurações da Loja</h5>
-        <div class="row g-2">
-          <div class="col-md-6">
-            <label>Nome da Loja</label>
-            <input id="configNome" class="form-control" placeholder="Ex: Minha Loja">
-          </div>
-          <div class="col-md-6">
-            <label>CNPJ</label>
-            <input id="configCnpj" class="form-control" placeholder="00.000.000/0001-00">
-          </div>
+        <h5><i class="bi bi-gear"></i> Configurações</h5>
+        <div class="mb-2 fw-semibold">Backup</div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-outline-primary" onclick="exportarBackup()"><i class="bi bi-cloud-download"></i> Exportar Backup</button>
+          <label class="btn btn-outline-success mb-0">
+            <i class="bi bi-cloud-upload"></i> Importar Backup
+            <input type="file" accept="application/json" hidden onchange="importarBackup(event)">
+          </label>
         </div>
-        <div class="mt-3">
-          <button class="btn btn-success" onclick="salvarConfig()"><i class="bi bi-save"></i> Salvar Configurações</button>
-        </div>
+        <hr>
+        <div class="mb-2 fw-semibold">App Instalável (PWA)</div>
+        <p class="small text-muted">Abra via servidor (http://localhost) para testar o PWA. No Chrome/Edge aparecerá opção "Instalar".</p>
       </div>
 
     </div>
   </main>
 
+  <!-- FAB -->
+  <button class="btn btn-primary fab" onclick="toggleCard('vendasCard',this)"><i class="bi bi-plus-lg"></i></button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-/* ========= ESTADO & UTIL ========= */
-const KEY_PROD='pdv_produtos', KEY_HIST='pdv_hist', KEY_CAIXA='pdv_caixa', KEY_CONF_NOME='pdv_nome', KEY_CONF_CNPJ='pdv_cnpj';
-let produtos=JSON.parse(localStorage.getItem(KEY_PROD)||'[]');
-let historico=JSON.parse(localStorage.getItem(KEY_HIST)||'[]');
-let caixa=JSON.parse(localStorage.getItem(KEY_CAIXA)||'{"saldo":0,"movs":[]}');
-if(!caixa.saldo) caixa.saldo=0; if(!caixa.movs) caixa.movs=[];
-let carrinho=[], total=0, editingIndex=null;
+/* ----------------- Utilidades ----------------- */
+function money(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function getLS(k,def){ try{ return JSON.parse(localStorage.getItem(k) || JSON.stringify(def)); }catch(e){ return def; } }
+function setLS(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
 
-const BRL=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+/* ----------------- Estado (carrega do localStorage) ----------------- */
+let produtos = getLS('pdv_produtos', []);            // [{id,nome,descricao,codigo,preco,estoque}]
+let historico = getLS('pdv_hist', []);               // [{id,data,itens:[{id,nome,preco,qtd}],total,clienteId,clienteNome,forma}]
+let caixa = getLS('pdv_caixa', { saldo:0, movs: [] });
+let clientes = getLS('pdv_clientes', []);            // [{id,nome,telefone,cpf,email,obs,compras}]
 
-let EMPRESA_NOME = localStorage.getItem(KEY_CONF_NOME) || "DRICCA COSMÉTICOS";
-let EMPRESA_CNPJ = localStorage.getItem(KEY_CONF_CNPJ) || "00.000.000/0001-00";
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('configNome').value=EMPRESA_NOME;
-  document.getElementById('configCnpj').value=EMPRESA_CNPJ;
-});
+/* Garantias */
+clientes.forEach(c=>{ if(typeof c.compras!=='number') c.compras = 0; });
+setLS('pdv_clientes', clientes);
 
-/* ========= NAVEGAÇÃO ========= */
-function toggleCard(id,el){
-  ['dashboardCard','vendasCard','produtosCard','historico','caixaCard','comprovante','configCard'].forEach(c=>{
-    const e=document.getElementById(c); if(e) e.style.display='none';
-  });
-  document.querySelectorAll('.menu a').forEach(a=>a.classList.remove('active'));
-  if(el) el.classList.add('active');
-  const card=document.getElementById(id); if(card) card.style.display='block';
-  if(id==='vendasCard'){ setTimeout(()=>document.getElementById('scanBarras')?.focus(),80); }
+/* ----------------- Navegação (toggleCard) ----------------- */
+function toggleCard(id, el) {
+  // Esconde todos os cards
+  ['dashboardCard','vendasCard','produtosCard','clientesCard','relatoriosCard','historico','caixaCard','comprovante','configCard']
+    .forEach(cid => { const e = document.getElementById(cid); if(e) e.style.display = 'none'; });
+  // Mostra selecionado
+  const target = document.getElementById(id);
+  if(target) target.style.display = 'block';
+  // Ativa item do menu
+  document.querySelectorAll('.menu a, .offcanvas-body a').forEach(a=>a.classList.remove('active'));
+  if(el && el.classList) el.classList.add('active');
+  // Fechar offcanvas no mobile se estiver aberto
+  try {
+    const off = document.getElementById('menuMobile');
+    const bs = bootstrap.Offcanvas.getInstance(off);
+    if(bs) bs.hide();
+  } catch(e){}
+  // Atualizar gráficos/visões quando abrir certas telas
+  if(id === 'produtosCard') renderProdutos();
+  if(id === 'clientesCard') listarClientes();
+  if(id === 'relatoriosCard') buildRelatorios();
+  if(id === 'historico') renderHistorico();
+  if(id === 'caixaCard') renderCaixa();
 }
 
-/* ========= CONFIG ========= */
-function salvarConfig(){
-  EMPRESA_NOME=document.getElementById('configNome').value||EMPRESA_NOME;
-  EMPRESA_CNPJ=document.getElementById('configCnpj').value||EMPRESA_CNPJ;
-  localStorage.setItem(KEY_CONF_NOME,EMPRESA_NOME);
-  localStorage.setItem(KEY_CONF_CNPJ,EMPRESA_CNPJ);
-  alert('Configurações salvas!');
-}
-
-/* ========= PRODUTOS ========= */
+/* ----------------- Produtos ----------------- */
+let editingIndex = null;
 function salvarProduto(){
-  const nome=document.getElementById('nomeProduto').value.trim();
-  const desc=document.getElementById('descricaoProduto').value.trim();
-  const codigo=document.getElementById('codigoProduto').value.trim();
-  const preco=parseFloat(document.getElementById('precoProduto').value);
-  const est=parseInt(document.getElementById('estoqueProduto').value);
-  if(!nome||isNaN(preco)||isNaN(est)) return alert('Preencha nome, preço e estoque');
-
-  // prevenir código duplicado
+  const nome = document.getElementById('nomeProduto').value.trim();
+  const desc = document.getElementById('descricaoProduto').value.trim();
+  const codigo = document.getElementById('codigoProduto').value.trim();
+  const preco = parseFloat(document.getElementById('precoProduto').value);
+  const est = parseInt(document.getElementById('estoqueProduto').value);
+  if(!nome || isNaN(preco) || isNaN(est)){ alert('Preencha nome, preço e estoque'); return; }
+  // prevenir duplicados por codigo
   if(codigo){
-    const dup=produtos.find((p,ix)=>p.codigo===codigo && ix!==editingIndex);
-    if(dup) return alert('Já existe produto com esse código de barras');
+    const dup = produtos.find((p,ix)=>p.codigo===codigo && ix!==editingIndex);
+    if(dup) return alert('Já existe produto com esse código');
   }
-
-  if(editingIndex===null){
-    produtos.push({id:Date.now(),codigo,nome,descricao:desc,preco,estoque:est});
-  }else{
-    let p=produtos[editingIndex];
-    p.codigo=codigo; p.nome=nome; p.descricao=desc; p.preco=preco; p.estoque=est;
-    editingIndex=null;
+  if(editingIndex === null){
+    produtos.push({ id: Date.now(), nome, descricao: desc, codigo, preco, estoque: est });
+  } else {
+    const p = produtos[editingIndex];
+    p.nome = nome; p.descricao = desc; p.codigo = codigo; p.preco = preco; p.estoque = est;
+    editingIndex = null;
   }
-  localStorage.setItem(KEY_PROD,JSON.stringify(produtos));
+  setLS('pdv_produtos', produtos);
   renderProdutos();
-  ['nomeProduto','descricaoProduto','codigoProduto','precoProduto','estoqueProduto'].forEach(id=>document.getElementById(id).value='');
+  ['nomeProduto','descricaoProduto','codigoProduto','precoProduto','estoqueProduto'].forEach(i=>document.getElementById(i).value='');
+  alert('Produto salvo!');
 }
 function editarProduto(i){
-  let p=produtos[i]; editingIndex=i;
-  document.getElementById('nomeProduto').value=p.nome||'';
-  document.getElementById('descricaoProduto').value=p.descricao||'';
-  document.getElementById('codigoProduto').value=p.codigo||'';
-  document.getElementById('precoProduto').value=p.preco||'';
-  document.getElementById('estoqueProduto').value=p.estoque||'';
+  editingIndex = i;
+  const p = produtos[i];
+  document.getElementById('nomeProduto').value = p.nome || '';
+  document.getElementById('descricaoProduto').value = p.descricao || '';
+  document.getElementById('codigoProduto').value = p.codigo || '';
+  document.getElementById('precoProduto').value = p.preco || '';
+  document.getElementById('estoqueProduto').value = p.estoque || '';
+  toggleCard('produtosCard');
 }
 function deletarProduto(i){
   if(!confirm('Excluir produto?')) return;
   produtos.splice(i,1);
-  localStorage.setItem(KEY_PROD,JSON.stringify(produtos));
+  setLS('pdv_produtos', produtos);
   renderProdutos();
 }
 function renderProdutos(){
-  const tbody=document.getElementById('tProdutos'); if(tbody) tbody.innerHTML='';
+  const tbody = document.getElementById('tProdutos');
+  tbody.innerHTML = '';
   produtos.forEach((p,i)=>{
-    if(!tbody) return;
-    tbody.innerHTML+=`
-      <tr>
-        <td>${p.codigo||''}</td>
-        <td>${p.nome}</td>
-        <td>${p.descricao||''}</td>
-        <td>${BRL(p.preco)}</td>
-        <td>${p.estoque}</td>
-        <td>
-          <button class="btn btn-sm btn-warning" onclick="editarProduto(${i})"><i class="bi bi-pencil"></i></button>
-          <button class="btn btn-sm btn-danger" onclick="deletarProduto(${i})"><i class="bi bi-trash"></i></button>
-        </td>
-      </tr>`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.codigo||''}</td><td>${p.nome}</td><td>${p.descricao||''}</td><td>${money(p.preco)}</td><td>${p.estoque}</td>
+      <td>
+        <button class="btn btn-sm btn-warning" onclick="editarProduto(${i})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-danger" onclick="deletarProduto(${i})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tbody.appendChild(tr);
   });
-
-  // preencher select vendas com filtro
-  const termo=(document.getElementById('buscaVenda')?.value||'').toLowerCase();
-  let sel=document.getElementById('selectProduto'); if(sel){
-    sel.innerHTML='';
-    produtos
-      .filter(p=>{
-        const alvo=`${p.nome} ${p.descricao||''} ${p.codigo||''}`.toLowerCase();
-        return !termo || alvo.includes(termo);
-      })
-      .forEach((p,idx)=>{
-        sel.innerHTML+=`<option value="${p.id}">${p.nome} - ${BRL(p.preco)} (${p.estoque})</option>`;
-      });
-  }
-
-  // dashboard contadores
-  const dashItens=document.getElementById('dashItens');
-  const dashBaixo=document.getElementById('dashBaixo');
-  if(dashItens) dashItens.textContent=produtos.reduce((s,p)=>s+p.estoque,0);
-  if(dashBaixo) dashBaixo.textContent=produtos.filter(p=>p.estoque<=3).length;
-
-  filtrarTabelaProdutos(); // aplica filtro visual da tabela (cadastro)
+  // preencher select de vendas
+  const termo = (document.getElementById('buscaVenda')?.value||'').toLowerCase();
+  const sel = document.getElementById('selectProduto'); sel.innerHTML = '';
+  produtos.filter(p => {
+    const alvo = `${p.nome} ${p.descricao||''} ${p.codigo||''}`.toLowerCase();
+    return !termo || alvo.includes(termo);
+  }).forEach(p => sel.innerHTML += `<option value="${p.id}">${p.nome} - ${money(p.preco)} (${p.estoque})</option>`);
 }
+
+/* Filtro tabela produtos */
 function filtrarTabelaProdutos(){
-  const termo=(document.getElementById('buscaProduto')?.value||'').toLowerCase();
+  const termo = (document.getElementById('buscaProduto')?.value||'').toLowerCase();
   document.querySelectorAll('#tProdutos tr').forEach(tr=>{
-    const txt=tr.textContent.toLowerCase();
-    tr.style.display=termo && !txt.includes(termo) ? 'none' : '';
+    const txt = tr.textContent.toLowerCase();
+    tr.style.display = termo && !txt.includes(termo) ? 'none' : '';
   });
 }
-function filtrarSelectProdutos(){ renderProdutos(); }
 
-/* ========= VENDAS ========= */
+/* ----------------- Clientes ----------------- */
+function salvarCliente(){
+  const nome = document.getElementById('cliNome').value.trim();
+  const telefone = document.getElementById('cliTelefone').value.trim();
+  const cpf = document.getElementById('cliCpf').value.trim();
+  const email = document.getElementById('cliEmail').value.trim();
+  const obs = document.getElementById('cliObs').value.trim();
+  if(!nome){ alert('Informe o nome.'); return; }
+  const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+  clientes.push({ id, nome, telefone, cpf, email, obs, compras: 0 });
+  setLS('pdv_clientes', clientes);
+  listarClientes();
+  // reset form
+  ['cliNome','cliTelefone','cliCpf','cliEmail','cliObs'].forEach(i=>document.getElementById(i).value='');
+  // atualizar select de clientes em Vendas
+  preencherSelectClientes();
+  alert('Cliente salvo!');
+}
+function removerCliente(id){
+  if(!confirm('Remover cliente?')) return;
+  clientes = clientes.filter(c=>c.id !== id);
+  setLS('pdv_clientes', clientes);
+  listarClientes();
+  preencherSelectClientes();
+}
+function listarClientes(){
+  const tb = document.getElementById('tbClientes');
+  tb.innerHTML = '';
+  clientes.forEach(c=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.nome}</td><td>${c.telefone||'-'}</td><td>${c.cpf||'-'}</td><td>${c.email||'-'}</td><td>${c.compras||0}</td>
+      <td class="text-nowrap">
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="verHistoricoCliente('${c.id}')"><i class="bi bi-clock-history"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="removerCliente('${c.id}')"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+}
+function preencherSelectClientes(){
+  const sel = document.getElementById('selectCliente');
+  sel.innerHTML = `<option value="">Não vincular</option>`;
+  clientes.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome} ${c.telefone?('- '+c.telefone):''}</option>`);
+}
+function verHistoricoCliente(id){
+  const c = clientes.find(x=>x.id===id);
+  if(!c){ alert('Cliente não encontrado'); return; }
+  toggleCard('historico');
+  const vendasCli = historico.filter(h=>h.clienteId === id);
+  let html = `<div class="fw-semibold mb-2">Histórico de ${c.nome}</div>`;
+  if(vendasCli.length===0) html += '<div class="text-muted">Sem vendas vinculadas.</div>';
+  else vendasCli.forEach(h=>{
+    const data = new Date(h.data||Date.now()).toLocaleString('pt-BR');
+    html += `<div class="border rounded p-2 mb-2"><div><b>${h.id||'-'}</b> — ${data} — <b>Total:</b> ${money(h.total||0)}</div>
+      <div class="small text-muted">${(h.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(', ')}</div></div>`;
+  });
+  document.getElementById('listaHistorico').innerHTML = html;
+}
+
+/* ----------------- Carrinho e Vendas ----------------- */
+let carrinho = [], total = 0;
 function adicionarCarrinho(){
-  const sel=document.getElementById('selectProduto');
+  const sel = document.getElementById('selectProduto');
   const idSel = sel && sel.value ? Number(sel.value) : null;
-  const qtd=parseInt(document.getElementById('quantidadeVenda').value)||1;
-
+  const qtd = parseInt(document.getElementById('quantidadeVenda').value) || 1;
   const p = produtos.find(x=>x.id===idSel);
   if(!p) return alert('Selecione um produto');
   if(qtd<=0) return;
-  if(p.estoque<qtd) return alert('Estoque insuficiente');
-
-  let ex=carrinho.find(c=>c.id===p.id);
-  if(ex){
-    if(ex.qtd+qtd>p.estoque) return alert('Estoque insuficiente');
-    ex.qtd+=qtd;
-  }else{
-    carrinho.push({id:p.id,nome:p.nome,preco:p.preco,qtd});
-  }
+  if(p.estoque < qtd) return alert('Estoque insuficiente');
+  let ex = carrinho.find(c=>c.id===p.id);
+  if(ex){ if(ex.qtd + qtd > p.estoque) return alert('Estoque insuficiente'); ex.qtd += qtd; }
+  else carrinho.push({ id: p.id, nome: p.nome, preco: p.preco, qtd });
   renderCarrinho();
 }
 function renderCarrinho(){
-  let ul=document.getElementById('listaCarrinho'); if(!ul) return;
-  ul.innerHTML=''; total=0;
+  const ul = document.getElementById('listaCarrinho');
+  ul.innerHTML = '';
+  total = 0;
   carrinho.forEach((c,i)=>{
-    total+=c.preco*c.qtd;
-    ul.innerHTML+=`
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        ${c.nome} x ${c.qtd} - ${BRL(c.preco)}
-        <button class="btn btn-sm btn-danger" onclick="removerCarrinho(${i})">x</button>
-      </li>`;
+    total += c.preco * c.qtd;
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    li.innerHTML = `${c.nome} x ${c.qtd} - ${money(c.preco)} <button class="btn btn-sm btn-danger" onclick="removerCarrinho(${i})">x</button>`;
+    ul.appendChild(li);
   });
-  document.getElementById('total').textContent=BRL(total);
+  document.getElementById('total').textContent = money(total);
   calcularTroco();
 }
 function removerCarrinho(i){ carrinho.splice(i,1); renderCarrinho(); }
 
 function buscarPorBarrasVendas(e){
-  if(e.key==='Enter'){
-    const codigo=e.target.value.trim();
+  if(e.key === 'Enter'){
+    const codigo = e.target.value.trim();
     if(!codigo) return;
     adicionarPorCodigo(codigo);
-    e.target.value='';
+    e.target.value = '';
   }
 }
-function adicionarPorCodigo(codigo,qtd=1){
-  const p=produtos.find(x => (x.codigo||'')===codigo);
+function adicionarPorCodigo(codigo, qtd = 1){
+  const p = produtos.find(x => (x.codigo||'') === codigo);
   if(!p) return alert('Produto não encontrado pelo código');
-  if(p.estoque<qtd) return alert('Estoque insuficiente');
-
-  let ex=carrinho.find(c=>c.id===p.id);
-  if(ex){
-    if(ex.qtd+qtd>p.estoque) return alert('Estoque insuficiente');
-    ex.qtd+=qtd;
-  }else{
-    carrinho.push({id:p.id,nome:p.nome,preco:p.preco,qtd});
-  }
+  if(p.estoque < qtd) return alert('Estoque insuficiente');
+  let ex = carrinho.find(c=>c.id===p.id);
+  if(ex){ if(ex.qtd + qtd > p.estoque) return alert('Estoque insuficiente'); ex.qtd += qtd; } 
+  else carrinho.push({ id: p.id, nome: p.nome, preco: p.preco, qtd });
   renderCarrinho();
 }
 
 function toggleTroco(){
-  let isDin=document.getElementById('formaPagamento').value==='dinheiro';
-  document.getElementById('pagamentoDinheiro').style.display=isDin?'block':'none';
+  const isDin = document.getElementById('formaPagamento').value === 'dinheiro';
+  document.getElementById('pagamentoDinheiro').style.display = isDin ? 'block' : 'none';
   calcularTroco();
 }
 function calcularTroco(){
-  if(document.getElementById('formaPagamento').value!=='dinheiro'){
-    document.getElementById('troco').textContent=BRL(0); return;
+  if(document.getElementById('formaPagamento').value !== 'dinheiro'){
+    document.getElementById('troco').textContent = money(0); return;
   }
-  const pago=parseFloat(document.getElementById('valorPago').value)||0;
-  const troco=Math.max(0,pago-total);
-  document.getElementById('troco').textContent=BRL(troco);
+  const pago = parseFloat(document.getElementById('valorPago').value) || 0;
+  const troco = Math.max(0, pago - total);
+  document.getElementById('troco').textContent = money(troco);
 }
 
 function finalizarVenda(){
-  if(carrinho.length===0) return alert('Carrinho vazio');
-
-  const forma=document.getElementById('formaPagamento').value;
-  let pago=total, troco=0;
-  if(forma==='dinheiro'){
-    pago=parseFloat(document.getElementById('valorPago').value);
-    if(isNaN(pago)||pago<total) return alert('Valor pago insuficiente');
-    troco=pago-total;
-    // registra entrada no caixa
-    caixa.saldo+=total;
-    caixa.movs.unshift({id:Date.now(),tipo:'entrada',valor:total,desc:'Venda balcão',data:new Date().toISOString()});
-    localStorage.setItem(KEY_CAIXA,JSON.stringify(caixa));
-    renderCaixa();
+  if(carrinho.length === 0) return alert('Carrinho vazio');
+  const forma = document.getElementById('formaPagamento').value;
+  let pago = total, troco = 0;
+  if(forma === 'dinheiro'){
+    pago = parseFloat(document.getElementById('valorPago').value);
+    if(isNaN(pago) || pago < total) return alert('Valor pago insuficiente');
+    troco = pago - total;
+    caixa.saldo += total;
+    caixa.movs.unshift({ id: Date.now(), tipo: 'entrada', valor: total, desc: 'Venda balcão', data: new Date().toISOString() });
+    setLS('pdv_caixa', caixa);
   }
-
   // baixa estoque
-  carrinho.forEach(it=>{ const p=produtos.find(x=>x.id===it.id); if(p) p.estoque-=it.qtd; });
-  localStorage.setItem(KEY_PROD,JSON.stringify(produtos));
-  renderProdutos();
-
-  const venda={id:Date.now(),itens:[...carrinho],total,pago,troco,forma,data:new Date().toISOString()};
+  carrinho.forEach(it => {
+    const p = produtos.find(x => x.id === it.id);
+    if(p) p.estoque -= it.qtd;
+  });
+  setLS('pdv_produtos', produtos);
+  // montar venda
+  const clienteId = document.getElementById('selectCliente').value || null;
+  const clienteObj = clientes.find(c=>c.id === clienteId);
+  const venda = {
+    id: Date.now(),
+    data: new Date().toISOString(),
+    itens: JSON.parse(JSON.stringify(carrinho)),
+    total,
+    pago,
+    troco,
+    forma,
+    clienteId,
+    clienteNome: clienteObj ? clienteObj.nome : null
+  };
   historico.unshift(venda);
-  localStorage.setItem(KEY_HIST,JSON.stringify(historico));
-  renderHistorico();
-  gerarCupom(venda);
-
-  // limpa carrinho e vai ao comprovante
-  carrinho=[]; renderCarrinho();
-  toggleCard('comprovante',document.querySelector('.menu a[onclick*="comprovante"]'));
+  setLS('pdv_hist', historico);
+  // incrementar contador de compras do cliente
+  if(clienteObj){
+    clienteObj.compras = (clienteObj.compras || 0) + 1;
+    setLS('pdv_clientes', clientes);
+    listarClientes();
+  }
+  // registrar caixa
+  setLS('pdv_caixa', caixa);
+  // gerar cupom e limpar
+  verCupom(venda);
+  carrinho = []; renderCarrinho(); renderProdutos(); buildRelatorios(); renderHistorico();
+  toggleCard('comprovante');
+  alert('Venda registrada!');
 }
 
-/* ========= CUPOM ========= */
-function gerarCupom(v){
-  const c=document.getElementById('cupom');
-  let line='------------------------------';
-  let txt=`${EMPRESA_NOME}\nCNPJ: ${EMPRESA_CNPJ}\n${line}\n`;
-  v.itens.forEach(it=>{
-    txt+=`${it.nome}\n ${it.qtd} x ${BRL(it.preco)} = ${BRL(it.preco*it.qtd)}\n`;
-  });
-  txt+=`${line}\nTOTAL: ${BRL(v.total)}\nPAGO: ${BRL(v.pago)}\nTROCO: ${BRL(v.troco)}\nFORMA: ${v.forma.toUpperCase()}\n${line}\n${new Date(v.data).toLocaleString('pt-BR')}\nObrigado pela preferência!`;
-  c.textContent=txt;
+/* ----------------- CUPOM / WHATSAPP ----------------- */
+let ultimoCupomTexto = '';
+function gerarTextoCupom(v){
+  const data = new Date(v.data||Date.now()).toLocaleString('pt-BR');
+  let s = '*** PDV COSMÉTICOS ***\\n';
+  s += 'Data: ' + data + '\\n';
+  if(v.clienteNome) s += 'Cliente: ' + v.clienteNome + '\\n';
+  s += '-----------------------------\\n';
+  (v.itens||[]).forEach(i=> s += `${i.nome}  x${i.qtd||1}  ${money(i.preco||0)}\\n`);
+  s += '-----------------------------\\n';
+  s += 'TOTAL: ' + money(v.total||0) + '\\n';
+  s += '\\nObrigado pela preferência!';
+  return s;
+}
+function verCupom(v){
+  const txt = gerarTextoCupom(v);
+  ultimoCupomTexto = txt;
+  document.getElementById('cupom').textContent = txt;
+}
+function enviarWhatsApp(){
+  const tel = (document.getElementById('wppTelefone').value||'').replace(/\\D/g,'');
+  if(!tel) return alert('Informe o telefone com DDD.');
+  if(!ultimoCupomTexto) return alert('Abra um cupom no Histórico primeiro.');
+  const url = 'https://wa.me/55' + tel + '?text=' + encodeURIComponent(ultimoCupomTexto);
+  window.open(url, '_blank');
 }
 
-/* ========= HISTÓRICO ========= */
-function aplicarFiltrosHistorico(){ renderHistorico(); }
+/* ----------------- HISTÓRICO ----------------- */
 function renderHistorico(){
-  const ul=document.getElementById('tHistorico'); if(!ul) return;
-  const ano=document.getElementById('hAno').value; const mes=document.getElementById('hMes').value; const dia=document.getElementById('hDia').value;
-  const filtrados = historico.filter(h=>{
-    const d=new Date(h.data);
-    if(ano && d.getFullYear()!=ano) return false;
-    if(mes && (d.getMonth()+1)!=mes) return false;
-    if(dia && d.getDate()!=dia) return false;
-    return true;
+  const cont = document.getElementById('listaHistorico');
+  cont.innerHTML = '';
+  if(historico.length === 0){ cont.innerHTML = '<div class="text-muted">Sem vendas registradas.</div>'; return; }
+  historico.slice().forEach(h=>{
+    const data = new Date(h.data||Date.now()).toLocaleString('pt-BR');
+    const div = document.createElement('div');
+    div.className = 'border rounded p-2 mb-2 d-flex justify-content-between align-items-center';
+    div.innerHTML = `<div>
+        <div><b>${h.id}</b> — ${data} — <b>Total:</b> ${money(h.total||0)}</div>
+        <div class="small text-muted">${(h.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(', ')}</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" onclick='verCupom(${JSON.stringify(h)}); toggleCard("comprovante")'><i class="bi bi-ticket-perforated"></i></button>
+      </div>`;
+    cont.appendChild(div);
   });
-
-  ul.innerHTML='';
-  filtrados.forEach(h=>{
-    ul.innerHTML+=`<li class="list-group-item">
-      <b>${new Date(h.data).toLocaleString('pt-BR')}</b> — ${h.itens.length} itens — Total: ${BRL(h.total)} — ${h.forma.toUpperCase()}
-    </li>`;
-  });
-
-  atualizarDashboard(); // reflete nos gráficos
 }
 
-function exportarCSV(){
-  if(historico.length===0) return alert('Sem vendas para exportar');
-  let csv="Data,Produto,Quantidade,Preço Unitário,Total,Forma de Pagamento\n";
+/* ----------------- CAIXA ----------------- */
+function renderCaixa(){
+  document.getElementById('saldoCaixa').textContent = money(caixa.saldo || 0);
+  const ul = document.getElementById('listaCaixa');
+  ul.innerHTML = '';
+  (caixa.movs||[]).forEach(m=>{
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between';
+    li.innerHTML = `<span>${new Date(m.data).toLocaleString('pt-BR')} — ${m.tipo.toUpperCase()} — ${m.desc||'-'}</span><strong>${money(m.valor)}</strong>`;
+    ul.appendChild(li);
+  });
+}
+
+/* ----------------- RELATÓRIOS ----------------- */
+let chartMes, chartFatMes, chartTopProdutos;
+function buildRelatorios(){
+  // KPI
+  const now = new Date();
+  const mes = now.getMonth();
+  const ano = now.getFullYear();
+  const vendasMes = historico.filter(h=>{
+    const d = new Date(h.data||Date.now());
+    return d.getMonth() === mes && d.getFullYear() === ano;
+  });
+  const totalMes = vendasMes.reduce((s,h)=>s + (h.total||0), 0);
+  document.getElementById('kpiVendasMes').textContent = vendasMes.length;
+  document.getElementById('kpiFatMes').textContent = money(totalMes);
+  document.getElementById('kpiClientes').textContent = clientes.length;
+  document.getElementById('kpiProdutos').textContent = produtos.length;
+
+  // Dashboard últimos 6 meses
+  const mapa6 = {};
+  for(let i=5;i>=0;i--){
+    const d = new Date(ano, mes - i, 1);
+    mapa6[d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'})] = 0;
+  }
   historico.forEach(h=>{
-    h.itens.forEach(i=>{
-      csv+=`${new Date(h.data).toLocaleString('pt-BR')},${i.nome},${i.qtd},${i.preco},${i.qtd*i.preco},${h.forma}\n`;
+    const d = new Date(h.data||Date.now());
+    const key = d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'});
+    if(key in mapa6) mapa6[key] += (h.total||0);
+  });
+  if(chartMes) chartMes.destroy();
+  chartMes = new Chart(document.getElementById('chartMes'), { type:'line', data:{ labels:Object.keys(mapa6), datasets:[{ label:'Faturamento', data:Object.values(mapa6) }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } } });
+
+  // Faturamento 12 meses
+  const mapa12 = {};
+  for(let i=11;i>=0;i--){
+    const d = new Date(ano, mes - i, 1);
+    mapa12[d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'})] = 0;
+  }
+  historico.forEach(h=>{
+    const d = new Date(h.data||Date.now());
+    const key = d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'});
+    if(key in mapa12) mapa12[key] += (h.total||0);
+  });
+  if(chartFatMes) chartFatMes.destroy();
+  chartFatMes = new Chart(document.getElementById('chartFatMes'), { type:'bar', data:{ labels:Object.keys(mapa12), datasets:[{ label:'Faturamento', data:Object.values(mapa12) }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true } } } });
+
+  // Top produtos
+  const contagem = {};
+  historico.forEach(h => (h.itens||[]).forEach(i => contagem[i.nome] = (contagem[i.nome]||0) + (i.qtd||1)));
+  const top = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(chartTopProdutos) chartTopProdutos.destroy();
+  chartTopProdutos = new Chart(document.getElementById('chartTopProdutos'), { type:'bar', data:{ labels: top.map(t=>t[0]), datasets:[{ label:'Quantidade', data: top.map(t=>t[1]) }] }, options:{ indexAxis:'y', responsive:true, scales:{ x:{ beginAtZero:true } } } });
+}
+
+/* ----------------- Exportar Relatório CSV ----------------- */
+function exportarRelatorioCSV(){
+  if(historico.length===0) return alert('Sem vendas para exportar');
+  let csv = "Data,Produto,Quantidade,Preço Unitário,Total,Forma,Cliente\n";
+  historico.forEach(h=>{
+    (h.itens||[]).forEach(i=>{
+      csv += `"${new Date(h.data).toLocaleString('pt-BR')}", "${i.nome}", ${i.qtd}, ${i.preco}, ${i.qtd * i.preco}, ${h.forma}, "${h.clienteNome||''}"\n`;
     });
   });
-  let blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
-  let a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='relatorio_vendas.csv'; a.click();
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'relatorio_vendas.csv'; a.click();
 }
 
-function imprimirRelatorio(){
-  const ano=document.getElementById('hAno').value; const mes=document.getElementById('hMes').value; const dia=document.getElementById('hDia').value;
-  const filtrados = historico.filter(h=>{
-    const d=new Date(h.data);
-    if(ano && d.getFullYear()!=ano) return false;
-    if(mes && (d.getMonth()+1)!=mes) return false;
-    if(dia && d.getDate()!=dia) return false;
-    return true;
+/* ----------------- BACKUP ----------------- */
+function exportarBackup(){
+  const dados = { produtos, historico, caixa, clientes };
+  const blob = new Blob([JSON.stringify(dados,null,2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'backup_pdv.json';
+  a.click();
+}
+function importarBackup(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const dados = JSON.parse(e.target.result);
+      if(dados.produtos) setLS('pdv_produtos', dados.produtos);
+      if(dados.historico) setLS('pdv_hist', dados.historico);
+      if(dados.caixa) setLS('pdv_caixa', dados.caixa);
+      if(dados.clientes) setLS('pdv_clientes', dados.clientes);
+      alert('Backup restaurado com sucesso! Recarregando...');
+      location.reload();
+    } catch(err){ alert('Arquivo inválido de backup.'); }
+  };
+  reader.readAsText(file);
+}
+
+/* ----------------- PWA: registrar service worker ----------------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> {
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{/* falha silenciosa */});
   });
-
-  if(filtrados.length===0) return alert('Nenhuma venda para imprimir');
-  let rel=`${EMPRESA_NOME}\nCNPJ: ${EMPRESA_CNPJ}\nRELATÓRIO DE VENDAS\n===========================\n`;
-  filtrados.forEach(h=>{
-    rel+=`Data: ${new Date(h.data).toLocaleString('pt-BR')} | Forma: ${h.forma} | Total: ${BRL(h.total)}\n`;
-    h.itens.forEach(i=>{ rel+=`  - ${i.nome} (${i.qtd} x ${BRL(i.preco)})\n`; });
-    rel+=`---------------------------\n`;
-  });
-  const w=window.open('','Relatorio'); w.document.write(`<pre>${rel}</pre>`); w.print(); w.close();
 }
 
-/* ========= DASHBOARD ========= */
-function aplicarFiltrosDashboard(){ atualizarDashboard(); }
-function atualizarDashboard(){
-  const ano=document.getElementById('fAno').value; const mes=document.getElementById('fMes').value; const dia=document.getElementById('fDia').value;
-  const filtrados = historico.filter(h=>{
-    const d=new Date(h.data);
-    if(ano && d.getFullYear()!=ano) return false;
-    if(mes && (d.getMonth()+1)!=mes) return false;
-    if(dia && d.getDate()!=dia) return false;
-    return true;
-  });
-
-  document.getElementById('dashVendas').textContent=filtrados.length;
-  document.getElementById('dashFaturamento').textContent=BRL(filtrados.reduce((s,h)=>s+h.total,0));
-
-  // itens e baixo estoque
-  document.getElementById('dashItens').textContent=produtos.reduce((s,p)=>s+p.estoque,0);
-  document.getElementById('dashBaixo').textContent=produtos.filter(p=>p.estoque<=3).length;
-
-  // gráfico de barras: total por dia
-  const mapDia={}; filtrados.forEach(h=>{const d=new Date(h.data).getDate(); mapDia[d]=(mapDia[d]||0)+h.total;});
-  const ctx=document.getElementById('graficoBarras').getContext('2d');
-  if(window.chartBarras) window.chartBarras.destroy();
-  window.chartBarras=new Chart(ctx,{type:'bar',data:{labels:Object.keys(mapDia),datasets:[{label:'Faturamento',data:Object.values(mapDia)}]}});
-
-  // pizza: quantidade por produto
-  const mapProd={}; filtrados.forEach(h=>h.itens.forEach(i=>{mapProd[i.nome]=(mapProd[i.nome]||0)+i.qtd;}));
-  const ctx2=document.getElementById('graficoPizza').getContext('2d');
-  if(window.chartPizza) window.chartPizza.destroy();
-  window.chartPizza=new Chart(ctx2,{type:'pie',data:{labels:Object.keys(mapProd),datasets:[{data:Object.values(mapProd)}]}});
-
-  // saldo caixa
-  document.getElementById('saldoCaixa').textContent=BRL(caixa.saldo||0);
-}
-function imprimirDashboard(){
-  let dash=document.getElementById('dashboardCard').innerHTML;
-  let w=window.open('','Dashboard');
-  w.document.write(`
-    <html><head>
-      <title>Relatório Dashboard</title>
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-      <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
-    </head><body class="p-3">
-      <h3 class="text-center mb-3">Relatório - Dashboard</h3>
-      ${dash}
-      <script>
-        setTimeout(()=>{ window.print(); window.close(); }, 600);
-      <\/script>
-    </body></html>
-  `);
-  w.document.close();
-}
-
-/* ========= CAIXA ========= */
-function renderCaixa(){
-  const ul=document.getElementById('listaCaixa'); if(!ul) return;
-  ul.innerHTML='';
-  caixa.movs.forEach(m=>{
-    ul.innerHTML+=`<li class="list-group-item d-flex justify-content-between">
-      <span>${new Date(m.data).toLocaleString('pt-BR')} — ${m.tipo.toUpperCase()} — ${m.desc||'-'}</span>
-      <strong>${BRL(m.valor)}</strong>
-    </li>`;
-  });
-  document.getElementById('saldoCaixa').textContent=BRL(caixa.saldo||0);
-}
-function registrarMovimento(){
-  const tipo=document.getElementById('tipoMov').value;
-  const valor=parseFloat(document.getElementById('valorMov').value);
-  const desc=document.getElementById('descMov').value;
-  if(isNaN(valor)||valor<=0) return alert('Informe um valor válido');
-
-  if(tipo==='entrada') caixa.saldo+=valor; else caixa.saldo-=valor;
-  caixa.movs.unshift({id:Date.now(),tipo,valor,desc,data:new Date().toISOString()});
-  localStorage.setItem(KEY_CAIXA,JSON.stringify(caixa));
-  renderCaixa();
-  document.getElementById('valorMov').value=''; document.getElementById('descMov').value='';
-}
-function imprimirCaixa(){
-  if(caixa.movs.length===0) return alert('Sem movimentos no caixa');
-  let rel=`${EMPRESA_NOME}\nCNPJ: ${EMPRESA_CNPJ}\nCAIXA - MOVIMENTAÇÕES\n===========================\nSaldo atual: ${BRL(caixa.saldo)}\n\n`;
-  caixa.movs.forEach(m=>{
-    rel+=`${new Date(m.data).toLocaleString('pt-BR')} | ${m.tipo.toUpperCase()} | ${BRL(m.valor)} | ${m.desc||''}\n`;
-  });
-  const w=window.open('','Caixa'); w.document.write(`<pre>${rel}</pre>`); w.print(); w.close();
-}
-
-/* ========= INICIALIZAÇÃO ========= */
-function boot(){
+/* ----------------- Inicialização ----------------- */
+function init(){
+  toggleCard('dashboardCard');
   renderProdutos();
+  listarClientes();
+  preencherSelectClientes();
   renderHistorico();
   renderCaixa();
-  atualizarDashboard();
-  toggleTroco();
-  toggleCard('dashboardCard', document.querySelector('.menu a'));
+  buildRelatorios();
 }
-boot();
+init();
+
 </script>
 </body>
 </html>
