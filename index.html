@@ -1,714 +1,925 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>PDV Cosméticos — Pro</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#6f42c1">
-
-  <style>
-    :root{--roxao:#6f42c1}
-    body{background:#f8f9fa}
-    .menu{width:260px;min-height:100vh;background:var(--roxao);color:#fff;position:fixed;inset:0 auto 0 0;padding:20px}
-    .menu a{display:block;color:#fff;text-decoration:none;padding:10px 12px;margin:6px 0;border-radius:10px}
-    .menu a.active,.menu a:hover{background:#55339e}
-    .content{margin-left:280px;padding:20px}
-    .card{border-radius:14px}
-    /* Esconder cartões por padrão (serão mostrados via toggleCard) */
-    #dashboardCard,#vendasCard,#produtosCard,#clientesCard,#relatoriosCard,#historico,#caixaCard,#comprovante,#configCard{display:none}
-    /* Cupom não fiscal */
-    #cupom{font-family:monospace;white-space:pre-wrap;background:#fff;padding:10px;border:1px dashed #ccc;max-width:360px;margin:auto}
-    @media print{
-      body *{visibility:hidden}
-      #cupom,#cupom *{visibility:visible}
-      #cupom{position:absolute;left:0;top:0;width:80mm;font-size:12px;line-height:1.3}
-    }
-    @media (max-width: 768px) {
-      .content { margin-left: 0; margin-top: 70px; }
-      .menu{display:none}
-    }
-    .fab{ position:fixed; right:16px; bottom:16px; z-index:1050; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,0,0,.18); }
-  </style>
+<meta charset="utf-8" />
+<title>PDV Cosméticos — Completo (Local)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  :root{--roxao:#6f42c1}
+  body{background:#f8f9fa}
+  .menu{width:260px;min-height:100vh;background:var(--roxao);color:#fff;position:fixed;inset:0 auto 0 0;padding:20px}
+  .menu a{display:block;color:#fff;text-decoration:none;padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer}
+  .menu a.active,.menu a:hover{background:#55339e}
+  .content{margin-left:280px;padding:20px}
+  .card{border-radius:14px}
+  #dashboardCard,#vendasCard,#produtosCard,#clientesCard,#relatoriosCard,#historicoCard,#caixaCard,#comprovanteCard,#configCard{display:none}
+  #cupom{font-family:monospace;white-space:pre-wrap;background:#fff;padding:10px;border:1px dashed #ccc;max-width:360px;margin:auto}
+  @media print{
+    body *{visibility:hidden !important}
+    #cupom,#cupom *{visibility:visible !important}
+    #cupom{position:absolute;left:0;top:0;width:80mm;font-size:12px;line-height:1.3;border:none}
+  }
+  @media (max-width: 991px){.content{margin-left:0}.menu{display:none}}
+  .fab{ position:fixed; right:16px; bottom:16px; z-index:1050; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,0,0,.18); }
+  .menu, main.content { display:none; } /* Oculta tudo até logar */
+  .table-sm td,.table-sm th{padding:.45rem}
+  .muted{color:#6c757d}
+</style>
 </head>
 <body>
-  <!-- NAVBAR MOBILE -->
-  <nav class="navbar navbar-dark bg-primary d-md-none">
-    <div class="container-fluid">
-      <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuMobile">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <span class="navbar-brand mb-0 h5">PDV Cosméticos</span>
-    </div>
-  </nav>
 
-  <!-- MENU DESKTOP -->
-  <aside class="menu d-none d-md-block">
-    <h4 class="mb-3"><i class="bi bi-shop"></i> PDV</h4>
-    <a onclick="toggleCard('dashboardCard',this)" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a>
-    <a onclick="toggleCard('vendasCard',this)"><i class="bi bi-cart"></i> Vendas</a>
-    <a onclick="toggleCard('produtosCard',this)"><i class="bi bi-box-seam"></i> Produtos</a>
-    <a onclick="toggleCard('clientesCard',this)"><i class="bi bi-people"></i> Clientes</a>
-    <a onclick="toggleCard('relatoriosCard',this)"><i class="bi bi-graph-up-arrow"></i> Relatórios</a>
-    <a onclick="toggleCard('historico',this)"><i class="bi bi-receipt"></i> Histórico</a>
-    <a onclick="toggleCard('caixaCard',this)"><i class="bi bi-cash-coin"></i> Caixa</a>
-    <a onclick="toggleCard('comprovante',this)"><i class="bi bi-printer"></i> Comprovante</a>
-    <a onclick="toggleCard('configCard',this)"><i class="bi bi-gear"></i> Configurações</a>
-  </aside>
-
-  <!-- MENU MOBILE (Offcanvas) -->
-  <div class="offcanvas offcanvas-start bg-primary text-white" tabindex="-1" id="menuMobile">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title"><i class="bi bi-shop"></i> PDV</h5>
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body">
-      <a onclick="toggleCard('dashboardCard',this)" class="d-block text-white mb-2"><i class="bi bi-speedometer2"></i> Dashboard</a>
-      <a onclick="toggleCard('vendasCard',this)" class="d-block text-white mb-2"><i class="bi bi-cart"></i> Vendas</a>
-      <a onclick="toggleCard('produtosCard',this)" class="d-block text-white mb-2"><i class="bi bi-box-seam"></i> Produtos</a>
-      <a onclick="toggleCard('clientesCard',this)" class="d-block text-white mb-2"><i class="bi bi-people"></i> Clientes</a>
-      <a onclick="toggleCard('relatoriosCard',this)" class="d-block text-white mb-2"><i class="bi bi-graph-up-arrow"></i> Relatórios</a>
-      <a onclick="toggleCard('historico',this)" class="d-block text-white mb-2"><i class="bi bi-receipt"></i> Histórico</a>
-      <a onclick="toggleCard('caixaCard',this)" class="d-block text-white mb-2"><i class="bi bi-cash-coin"></i> Caixa</a>
-      <a onclick="toggleCard('comprovante',this)" class="d-block text-white mb-2"><i class="bi bi-printer"></i> Comprovante</a>
-      <a onclick="toggleCard('configCard',this)" class="d-block text-white mb-2"><i class="bi bi-gear"></i> Configurações</a>
+<!-- LOGIN -->
+<div id="loginCard" class="container mt-5">
+  <div class="card p-4 mx-auto" style="max-width:420px">
+    <h4 class="mb-3 text-center">Login PDV</h4>
+    <div class="mb-3"><input id="loginUser" class="form-control" placeholder="Usuário (ex: admin)"></div>
+    <div class="mb-3"><input id="loginPass" type="password" class="form-control" placeholder="Senha"></div>
+    <div class="d-grid gap-2">
+      <button class="btn btn-primary" onclick="fazerLogin()">Entrar</button>
+      <small class="text-muted">Admin inicial: <b>admin</b> / senha <b>1234</b></small>
     </div>
   </div>
+</div>
 
-  <!-- CONTEÚDO -->
-  <main class="content">
-    <div class="container-fluid">
-      <h2 class="mb-3 d-flex align-items-center gap-2">
-        <i class="bi bi-cart4"></i> PDV Cosméticos — Pro
-        <span class="badge bg-light text-dark">Novo</span>
-      </h2>
+<!-- MENU LATERAL (desktop) -->
+<aside class="menu d-none d-lg-block">
+  <h4 class="mb-3 d-flex align-items-center gap-2">
+    <i class="bi bi-shop"></i> PDV
+  </h4>
+  <div class="small mb-2">Usuário: <b id="userLabel">—</b></div>
+  <a onclick="toggleCard('dashboardCard',this)" class="active"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+  <a onclick="toggleCard('vendasCard',this)"><i class="bi bi-cart me-2"></i>Vendas</a>
+  <a onclick="toggleCard('produtosCard',this)"><i class="bi bi-box-seam me-2"></i>Produtos</a>
+  <a onclick="toggleCard('clientesCard',this)"><i class="bi bi-people me-2"></i>Clientes</a>
+  <a onclick="toggleCard('relatoriosCard',this)"><i class="bi bi-graph-up-arrow me-2"></i>Relatórios</a>
+  <a onclick="toggleCard('historicoCard',this)"><i class="bi bi-receipt me-2"></i>Histórico</a>
+  <a onclick="toggleCard('caixaCard',this)"><i class="bi bi-cash-coin me-2"></i>Caixa</a>
+  <a onclick="toggleCard('comprovanteCard',this)"><i class="bi bi-printer me-2"></i>Comprovante</a>
+  <a onclick="toggleCard('configCard',this)"><i class="bi bi-gear me-2"></i>Configurações</a>
+  <hr class="border-light">
+  <a onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Sair</a>
+</aside>
 
-      <!-- DASHBOARD -->
-      <div id="dashboardCard" class="card p-3">
-        <div class="row g-3">
-          <div class="col-6 col-md-3"><div class="card p-3 text-center"><div class="small text-muted">Vendas (Mês)</div><div class="fs-4 fw-bold" id="kpiVendasMes">0</div></div></div>
-          <div class="col-6 col-md-3"><div class="card p-3 text-center"><div class="small text-muted">Faturamento (Mês)</div><div class="fs-4 fw-bold" id="kpiFatMes">R$ 0,00</div></div></div>
-          <div class="col-6 col-md-3"><div class="card p-3 text-center"><div class="small text-muted">Clientes</div><div class="fs-4 fw-bold" id="kpiClientes">0</div></div></div>
-          <div class="col-6 col-md-3"><div class="card p-3 text-center"><div class="small text-muted">Produtos</div><div class="fs-4 fw-bold" id="kpiProdutos">0</div></div></div>
-        </div>
-        <div class="mt-3 card p-3" style="height:260px;"><canvas id="chartMes"></canvas></div>
-      </div>
+<!-- MENU MOBILE (offcanvas) -->
+<nav class="navbar navbar-dark bg-primary d-lg-none">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuMobile"><span class="navbar-toggler-icon"></span></button>
+    <span class="navbar-brand">PDV</span>
+  </div>
+</nav>
+<div class="offcanvas offcanvas-start bg-primary text-white" tabindex="-1" id="menuMobile">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title"><i class="bi bi-shop"></i> PDV</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="small mb-2">Usuário: <b id="userLabelMobile">—</b></div>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('dashboardCard')">Dashboard</a>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('vendasCard')">Vendas</a>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('produtosCard')">Produtos</a>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('clientesCard')">Clientes</a>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('relatoriosCard')">Relatórios</a>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('historicoCard')">Histórico</a>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('caixaCard')">Caixa</a>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('comprovanteCard')">Comprovante</a>
+    <a class="d-block text-white mb-2" data-bs-dismiss="offcanvas" onclick="toggleCard('configCard')">Configurações</a>
+    <a class="d-block text-white mt-3" onclick="logout()">Sair</a>
+  </div>
+</div>
 
-      <!-- VENDAS (MANTIVE E ADAPTEI) -->
-      <div id="vendasCard" class="card p-3">
-        <h5>Vendas</h5>
-        <div class="row">
-          <div class="col-md-6 border-end">
-            <div class="mb-2"><input id="buscaVenda" class="form-control" placeholder="Buscar produto..." oninput="filtrarSelectProdutos()"></div>
-            <div class="mb-2"><input id="scanBarras" class="form-control" placeholder="Passe o leitor de código e tecle Enter" onkeydown="buscarPorBarrasVendas(event)"></div>
-            <div class="mb-2"><select id="selectProduto" class="form-select"></select></div>
-            <div class="mb-2 d-flex gap-2">
-              <input id="quantidadeVenda" type="number" value="1" min="1" class="form-control">
-              <button class="btn btn-primary" onclick="adicionarCarrinho()"><i class="bi bi-plus-circle"></i></button>
-            </div>
-            <div class="mb-2">
-              <label>Cliente (opcional)</label>
-              <select id="selectCliente" class="form-select">
-                <option value="">Não vincular</option>
-              </select>
-            </div>
-            <div class="d-grid">
-              <button class="btn btn-success btn-lg" onclick="finalizarVenda()"><i class="bi bi-check2-circle"></i> Finalizar Venda</button>
+<!-- CONTEÚDO -->
+<main class="content">
+  <div class="container-fluid">
+
+    <!-- DASHBOARD -->
+    <section id="dashboardCard">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <div class="muted">Vendas (Hoje)</div>
+                <h4 id="dashVendasHoje">0</h4>
+              </div>
+              <i class="bi bi-basket2 display-6 text-primary"></i>
             </div>
           </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <div class="muted">Faturamento (Hoje)</div>
+                <h4 id="dashFatHoje">R$ 0,00</h4>
+              </div>
+              <i class="bi bi-currency-dollar display-6 text-success"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <div class="muted">Clientes</div>
+                <h4 id="dashClientes">0</h4>
+              </div>
+              <i class="bi bi-people display-6 text-warning"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <div class="muted">Produtos</div>
+                <h4 id="dashProdutos">0</h4>
+              </div>
+              <i class="bi bi-box-seam display-6 text-info"></i>
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <div class="col-md-6">
-            <ul id="listaCarrinho" class="list-group mb-2"></ul>
-            <div class="fw-bold">Total: <span id="total">R$ 0,00</span></div>
-            <div class="card mt-3 p-3">
-              <label>Forma de pagamento</label>
-              <select id="formaPagamento" class="form-select mb-2" onchange="toggleTroco()">
-                <option value="dinheiro">Dinheiro</option>
-                <option value="pix">PIX</option>
-                <option value="cartao">Cartão</option>
-              </select>
-              <div id="pagamentoDinheiro">
-                <label>Valor pago</label>
-                <input id="valorPago" type="number" step="0.01" class="form-control" oninput="calcularTroco()">
-                <div>Troco: <span id="troco">R$ 0,00</span></div>
+      <div class="card p-3 mt-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Gráfico — Vendas (7 dias)</h5>
+          <small class="muted">Atualiza a cada venda</small>
+        </div>
+        <canvas id="chart7dias" height="80"></canvas>
+      </div>
+    </section>
+
+    <!-- VENDAS -->
+    <section id="vendasCard">
+      <div class="row g-3">
+        <div class="col-lg-7">
+          <div class="card p-3">
+            <h5>Adicionar itens</h5>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-6">
+                <label class="form-label">Produto</label>
+                <select id="selProduto" class="form-select"></select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Qtd</label>
+                <input id="qtd" type="number" min="1" value="1" class="form-control">
+              </div>
+              <div class="col-md-3 d-grid">
+                <button class="btn btn-primary" onclick="adicionarProdutoCarrinho()">
+                  <i class="bi bi-plus-lg me-1"></i>Adicionar
+                </button>
+              </div>
+            </div>
+            <hr>
+            <ul id="listaCarrinho" class="list-group"></ul>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card p-3">
+            <h5>Resumo</h5>
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="muted">Total</div>
+                <div id="totalVenda" class="h4 mb-0">R$ 0,00</div>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Cliente</label>
+                <select id="selCliente" class="form-select"></select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Desconto (R$)</label>
+                <input id="desconto" type="number" step="0.01" class="form-control" value="0" oninput="renderCarrinho()">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Acréscimo (R$)</label>
+                <input id="acrescimo" type="number" step="0.01" class="form-control" value="0" oninput="renderCarrinho()">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Pagamento</label>
+                <select id="pagamento" class="form-select">
+                  <option>Dinheiro</option>
+                  <option>Pix</option>
+                  <option>Crédito</option>
+                  <option>Débito</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Valor pago</label>
+                <input id="valorPago" type="number" step="0.01" class="form-control" value="0" oninput="calcularTroco()">
+              </div>
+              <div class="col-6">
+                <div class="muted">Troco</div>
+                <div id="troco" class="h5 mb-2">R$ 0,00</div>
+              </div>
+              <div class="col-6">
+                <div class="muted">Comissão</div>
+                <div class="h6 mb-2"><span id="comissaoPctLabel">5%</span> • <span id="comissaoValor">R$ 0,00</span></div>
+              </div>
+              <div class="col-12 d-grid">
+                <button class="btn btn-success" onclick="finalizarVenda()">
+                  <i class="bi bi-check2-circle me-1"></i>Finalizar venda
+                </button>
+              </div>
+              <div class="col-12">
+                <small class="muted">Após finalizar, o cupom é gerado em “Comprovante”.</small>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- PRODUTOS -->
-      <div id="produtosCard" class="card p-3">
-        <h5>Cadastro de Produtos</h5>
-        <div class="row g-2">
-          <div class="col-md-4"><input id="nomeProduto" class="form-control" placeholder="Nome"></div>
-          <div class="col-md-4"><input id="descricaoProduto" class="form-control" placeholder="Descrição"></div>
-          <div class="col-md-4"><input id="codigoProduto" class="form-control" placeholder="Código de Barras"></div>
-        </div>
-        <div class="row g-2 mt-2">
-          <div class="col-md-3"><input id="precoProduto" type="number" step="0.01" class="form-control" placeholder="Preço"></div>
-          <div class="col-md-3"><input id="estoqueProduto" type="number" class="form-control" placeholder="Estoque"></div>
-          <div class="col-md-6 d-grid"><button class="btn btn-success" onclick="salvarProduto()"><i class="bi bi-save"></i> Salvar</button></div>
-        </div>
-        <div class="row mt-3">
-          <div class="col-md-6"><input id="buscaProduto" class="form-control" placeholder="Buscar por nome/descrição/código..." oninput="filtrarTabelaProdutos()"></div>
-        </div>
-        <table class="table mt-3">
-          <thead><tr><th>Código</th><th>Nome</th><th>Descrição</th><th>Preço</th><th>Estoque</th><th>Ações</th></tr></thead>
-          <tbody id="tProdutos"></tbody>
-        </table>
-      </div>
-
-      <!-- CLIENTES -->
-      <div id="clientesCard" class="card p-3">
-        <div class="d-flex align-items-center justify-content-between">
-          <h5><i class="bi bi-people"></i> Clientes</h5>
-          <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#novoCliente"><i class="bi bi-person-plus"></i> Novo</button>
-        </div>
-
-        <div id="novoCliente" class="collapse mt-2">
+    <!-- PRODUTOS -->
+    <section id="produtosCard">
+      <div class="row g-3">
+        <div class="col-lg-4">
           <div class="card p-3">
-            <div class="row g-2">
-              <div class="col-md-4"><input id="cliNome" class="form-control" placeholder="Nome completo"></div>
-              <div class="col-md-3"><input id="cliTelefone" class="form-control" placeholder="Telefone (somente números)"></div>
-              <div class="col-md-3"><input id="cliCpf" class="form-control" placeholder="CPF/CNPJ"></div>
-              <div class="col-md-2 d-grid"><button class="btn btn-success" onclick="salvarCliente()"><i class="bi bi-save"></i> Salvar</button></div>
-              <div class="col-12 mt-2"><input id="cliEmail" class="form-control" placeholder="E-mail (opcional)"></div>
-              <div class="col-12 mt-2"><textarea id="cliObs" class="form-control" rows="2" placeholder="Observações"></textarea></div>
+            <h5>Cadastrar / Editar produto</h5>
+<div class="mb-2">
+  <label class="form-label">Quantidade em estoque</label>
+  <input id="pQtd" type="number" min="0" class="form-control">
+</div>
+            <div class="mb-2">
+              <label class="form-label">Nome</label>
+              <input id="pNome" class="form-control">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Preço (R$)</label>
+              <input id="pPreco" type="number" step="0.01" class="form-control">
+            </div>
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary" onclick="salvarProduto()"><i class="bi bi-save me-1"></i>Salvar</button>
+              <button class="btn btn-secondary" onclick="limparFormProduto()">Limpar</button>
             </div>
           </div>
         </div>
+        <div class="col-lg-8">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Lista de produtos</h5>
+              <input id="buscaProduto" class="form-control w-auto" placeholder="Buscar..." oninput="renderProdutos()">
+            </div>
+            <div class="table-responsive mt-2">
+              <table class="table table-sm align-middle">
+                <thead><tr><th>#</th><th>Produto</th><th>Preço</th><th>Qtd</th><th class="text-end">Ações</th></tr></thead>
+                <tbody id="tProdutos"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        <div class="table-responsive mt-3">
+    <!-- CLIENTES -->
+    <section id="clientesCard">
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="card p-3">
+            <h5>Cadastrar / Editar cliente</h5>
+            <div class="mb-2"><label class="form-label">Nome</label><input id="cNome" class="form-control"></div>
+            <div class="mb-2"><label class="form-label">Telefone</label><input id="cTelefone" class="form-control"></div>
+            <div class="mb-2"><label class="form-label">Email</label><input id="cEmail" class="form-control"></div>
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary" onclick="salvarCliente()"><i class="bi bi-save me-1"></i>Salvar</button>
+              <button class="btn btn-secondary" onclick="limparFormCliente()">Limpar</button>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Lista de clientes</h5>
+              <input id="buscaCliente" class="form-control w-auto" placeholder="Buscar..." oninput="listarClientes()">
+            </div>
+            <div class="table-responsive mt-2">
+              <table class="table table-sm align-middle">
+                <thead><tr><th>#</th><th>Nome</th><th>Telefone</th><th>Email</th><th class="text-end">Ações</th></tr></thead>
+                <tbody id="tClientes"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RELATÓRIOS -->
+    <section id="relatoriosCard">
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="card p-3">
+            <h5>Vendas por forma de pagamento (30 dias)</h5>
+            <canvas id="chartPagto" height="120"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card p-3">
+            <h5>Comissões (30 dias)</h5>
+            <div class="h4" id="relComissaoTotal">R$ 0,00</div>
+            <small class="muted">Percentual padrão: <span id="relComissaoPct">5%</span></small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section id="historicoCard">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Histórico de vendas</h5>
+          <small class="muted">Mais recentes primeiro</small>
+        </div>
+        <div class="table-responsive mt-2">
           <table class="table table-sm align-middle">
-            <thead><tr><th>Nome</th><th>Telefone</th><th>CPF/CNPJ</th><th>E-mail</th><th>Compras</th><th>Ações</th></tr></thead>
-            <tbody id="tbClientes"></tbody>
+            <thead><tr><th>Data</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Vendedor</th><th>Comissão</th><th></th></tr></thead>
+            <tbody id="tHistorico"></tbody>
           </table>
         </div>
       </div>
+    </section>
 
-      <!-- RELATÓRIOS -->
-      <div id="relatoriosCard" class="card p-3">
-        <h5><i class="bi bi-graph-up-arrow"></i> Relatórios</h5>
+    <!-- CAIXA -->
+    <section id="caixaCard">
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="card p-3">
+            <h5>Registrar movimento</h5>
+            <div class="mb-2">
+              <label class="form-label">Tipo</label>
+              <select id="cxTipo" class="form-select">
+                <option value="Entrada">Entrada</option>
+                <option value="Saída">Saída</option>
+              </select>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Descrição</label>
+              <input id="cxDesc" class="form-control">
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Valor (R$)</label>
+              <input id="cxValor" type="number" step="0.01" class="form-control">
+            </div>
+            <div class="d-grid">
+              <button class="btn btn-primary" onclick="registrarCaixa()">Salvar</button>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Movimentos</h5>
+              <div class="h6 mb-0">Saldo: <span id="cxSaldo">R$ 0,00</span></div>
+            </div>
+            <div class="table-responsive mt-2">
+              <table class="table table-sm align-middle">
+                <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th class="text-end">Ações</th></tr></thead>
+                <tbody id="tCaixa"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPROVANTE -->
+    <section id="comprovanteCard">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Comprovante (Cupom)</h5>
+          <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+        </div>
+        <div id="cupom" class="mt-3">Nenhum cupom gerado ainda.</div>
+      </div>
+    </section>
+
+    <!-- CONFIG -->
+    <section id="configCard">
+      <div class="card p-3">
+        <h5>Configurações</h5>
         <div class="row g-3">
-          <div class="col-md-6">
-            <div class="card p-3" style="height:300px;"><div class="fw-semibold mb-2">Faturamento últimos 12 meses</div><canvas id="chartFatMes"></canvas></div>
+          <div class="col-md-4">
+            <label class="form-label">Comissão padrão (%)</label>
+            <input id="cfgComissao" type="number" step="0.1" class="form-control">
           </div>
-          <div class="col-md-6">
-            <div class="card p-3" style="height:300px;"><div class="fw-semibold mb-2">Top Produtos (Qtd)</div><canvas id="chartTopProdutos"></canvas></div>
+          <div class="col-md-8 d-flex align-items-end gap-2">
+            <button class="btn btn-primary" onclick="salvarConfig()">Salvar</button>
+            <small class="muted">Usada no cálculo de comissão das vendas.</small>
           </div>
-        </div>
-        <div class="mt-3 d-flex gap-2">
-          <button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir/Salvar PDF</button>
-          <button class="btn btn-outline-primary" onclick="exportarRelatorioCSV()"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV</button>
-        </div>
-      </div>
-
-      <!-- HISTÓRICO -->
-      <div id="historico" class="card p-3">
-        <h5><i class="bi bi-receipt"></i> Histórico de Vendas</h5>
-        <div id="listaHistorico" class="mt-2"></div>
-      </div>
-
-      <!-- CAIXA -->
-      <div id="caixaCard" class="card p-3">
-        <h5><i class="bi bi-cash-coin"></i> Caixa</h5>
-        <div class="mb-2">Saldo atual: <strong id="saldoCaixa">R$ 0,00</strong></div>
-        <ul id="listaCaixa" class="list-group"></ul>
-      </div>
-
-      <!-- COMPROVANTE -->
-      <div id="comprovante" class="card p-3">
-        <h5><i class="bi bi-printer"></i> Cupom</h5>
-        <div id="cupom">Selecione uma venda no histórico para ver o cupom aqui.</div>
-        <div class="mt-3 row g-2">
-          <div class="col-md-4"><input id="wppTelefone" class="form-control" placeholder="WhatsApp com DDD (ex: 93999999999)"></div>
-          <div class="col-md-3 d-grid"><button class="btn btn-success" onclick="enviarWhatsApp()"><i class="bi bi-whatsapp"></i> Enviar Cupom</button></div>
-          <div class="col-md-3 d-grid"><button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</button></div>
-        </div>
-      </div>
-
-      <!-- CONFIG -->
-      <div id="configCard" class="card p-3">
-        <h5><i class="bi bi-gear"></i> Configurações</h5>
-        <div class="mb-2 fw-semibold">Backup</div>
-        <div class="d-flex flex-wrap gap-2">
-          <button class="btn btn-outline-primary" onclick="exportarBackup()"><i class="bi bi-cloud-download"></i> Exportar Backup</button>
-          <label class="btn btn-outline-success mb-0">
-            <i class="bi bi-cloud-upload"></i> Importar Backup
-            <input type="file" accept="application/json" hidden onchange="importarBackup(event)">
-          </label>
         </div>
         <hr>
-        <div class="mb-2 fw-semibold">App Instalável (PWA)</div>
-        <p class="small text-muted">Abra via servidor (http://localhost) para testar o PWA. No Chrome/Edge aparecerá opção "Instalar".</p>
+        <h6>Usuários</h6>
+        <div class="row g-2">
+          <div class="col-md-3"><input id="uUsuario" class="form-control" placeholder="Usuário"></div>
+          <div class="col-md-3"><input id="uSenha" type="password" class="form-control" placeholder="Senha"></div>
+          <div class="col-md-3">
+            <select id="uNivel" class="form-select">
+              <option value="admin">admin</option>
+              <option value="vendedor">vendedor</option>
+            </select>
+          </div>
+          <div class="col-md-3 d-grid">
+            <button class="btn btn-secondary" onclick="adicionarUsuario()">Adicionar</button>
+          </div>
+        </div>
+        <div class="table-responsive mt-2">
+          <table class="table table-sm align-middle">
+            <thead><tr><th>#</th><th>Usuário</th><th>Nível</th><th class="text-end">Ações</th></tr></thead>
+            <tbody id="tUsuarios"></tbody>
+          </table>
+        </div>
       </div>
+    </section>
 
-    </div>
-  </main>
+  </div>
+</main>
 
-  <!-- FAB -->
-  <button class="btn btn-primary fab" onclick="toggleCard('vendasCard',this)"><i class="bi bi-plus-lg"></i></button>
+<!-- BOTÃO FLUTUANTE PARA VENDAS -->
+<button class="btn btn-primary fab d-none d-lg-flex" onclick="toggleCard('vendasCard')"><i class="bi bi-plus-lg"></i></button>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-/* ----------------- Utilidades ----------------- */
-function money(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-function getLS(k,def){ try{ return JSON.parse(localStorage.getItem(k) || JSON.stringify(def)); }catch(e){ return def; } }
-function setLS(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+/* ========= Helpers ========= */
+const money = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const getLS = (k,def)=>{ try{ return JSON.parse(localStorage.getItem(k) || JSON.stringify(def)); }catch(e){ return def; }};
+const setLS = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
+const uid = () => Date.now() + Math.random().toString(36).slice(2,8);
 
-/* ----------------- Estado (carrega do localStorage) ----------------- */
-let produtos = getLS('pdv_produtos', []);            // [{id,nome,descricao,codigo,preco,estoque}]
-let historico = getLS('pdv_hist', []);               // [{id,data,itens:[{id,nome,preco,qtd}],total,clienteId,clienteNome,forma}]
-let caixa = getLS('pdv_caixa', { saldo:0, movs: [] });
-let clientes = getLS('pdv_clientes', []);            // [{id,nome,telefone,cpf,email,obs,compras}]
+/* ========= Estado ========= */
+let usuarios = getLS('pdv_usuarios', []);
+let produtos = getLS('pdv_produtos', []);
+let clientes = getLS('pdv_clientes', []);
+let vendas = getLS('pdv_vendas', []);
+let caixa = getLS('pdv_caixa', []);
+let usuarioLogado = null;
+let carrinho = getLS('pdv_carrinho', []);
+let comissaoPadrao = Number(localStorage.getItem('pdv_comissao') || 5);
 
-/* Garantias */
-clientes.forEach(c=>{ if(typeof c.compras!=='number') c.compras = 0; });
-setLS('pdv_clientes', clientes);
-
-/* ----------------- Navegação (toggleCard) ----------------- */
-function toggleCard(id, el) {
-  // Esconde todos os cards
-  ['dashboardCard','vendasCard','produtosCard','clientesCard','relatoriosCard','historico','caixaCard','comprovante','configCard']
-    .forEach(cid => { const e = document.getElementById(cid); if(e) e.style.display = 'none'; });
-  // Mostra selecionado
-  const target = document.getElementById(id);
-  if(target) target.style.display = 'block';
-  // Ativa item do menu
-  document.querySelectorAll('.menu a, .offcanvas-body a').forEach(a=>a.classList.remove('active'));
-  if(el && el.classList) el.classList.add('active');
-  // Fechar offcanvas no mobile se estiver aberto
-  try {
-    const off = document.getElementById('menuMobile');
-    const bs = bootstrap.Offcanvas.getInstance(off);
-    if(bs) bs.hide();
-  } catch(e){}
-  // Atualizar gráficos/visões quando abrir certas telas
-  if(id === 'produtosCard') renderProdutos();
-  if(id === 'clientesCard') listarClientes();
-  if(id === 'relatoriosCard') buildRelatorios();
-  if(id === 'historico') renderHistorico();
-  if(id === 'caixaCard') renderCaixa();
+/* Seed inicial */
+if(usuarios.length===0){
+  usuarios.push({ usuario:"admin", senha:"1234", nivel:"admin" });
+  setLS('pdv_usuarios', usuarios);
+}
+if(produtos.length===0){
+  produtos = [
+    {id:uid(), nome:"Shampoo 300ml", preco:19.90},
+    {id:uid(), nome:"Condicionador 300ml", preco:22.50},
+    {id:uid(), nome:"Hidratante 200g", preco:28.00}
+  ]; setLS('pdv_produtos', produtos);
 }
 
-/* ----------------- Produtos ----------------- */
-let editingIndex = null;
+/* ========= Navegação ========= */
+function toggleCard(id, el){
+  document.querySelectorAll('main .container-fluid > section').forEach(s=>s.style.display='none');
+  const card = document.getElementById(id);
+  if(card){ card.style.display='block'; }
+  document.querySelectorAll('.menu a').forEach(a=>a.classList.remove('active'));
+  if(el) el.classList.add('active');
+
+  // Atualiza seções
+  if(id==='dashboardCard') renderDashboard();
+  if(id==='vendasCard'){ preencherSelectProdutos(); preencherSelectClientes(); renderCarrinho(); }
+  if(id==='produtosCard') renderProdutos();
+  if(id==='clientesCard') listarClientes();
+  if(id==='relatoriosCard'){ renderChartPagto(); renderRelComissao(); }
+  if(id==='historicoCard') renderHistorico();
+  if(id==='caixaCard') renderCaixa();
+  if(id==='comprovanteCard'){} // nada
+  if(id==='configCard'){ document.getElementById('cfgComissao').value = comissaoPadrao; renderUsuarios(); }
+}
+
+/* ========= Login ========= */
+function fazerLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const user = usuarios.find(x=>x.usuario===u && x.senha===p);
+  if(!user) return alert('Usuário ou senha inválidos');
+
+  usuarioLogado = { usuario: user.usuario, nivel: user.nivel };
+  setLS('pdv_usuario', usuarioLogado);
+
+  document.getElementById('loginCard').style.display = 'none';
+  document.querySelector('.menu').style.display = 'block';
+  document.querySelector('main.content').style.display = 'block';
+
+  document.getElementById('userLabel').textContent = usuarioLogado.usuario + ' ('+usuarioLogado.nivel+')';
+  document.getElementById('userLabelMobile').textContent = usuarioLogado.usuario + ' ('+usuarioLogado.nivel+')';
+  document.getElementById('comissaoPctLabel').textContent = comissaoPadrao + '%';
+
+  // Restrições para vendedor
+  if(usuarioLogado.nivel === 'vendedor'){
+    document.querySelector("[onclick*='produtosCard']").style.display = 'none';
+    document.querySelector("[onclick*='relatoriosCard']").style.display = 'none';
+    document.querySelector("[onclick*='caixaCard']").style.display = 'none';
+    document.querySelector("[onclick*='configCard']").style.display = 'none';
+  }
+  toggleCard('dashboardCard');
+}
+function logout(){ localStorage.removeItem('pdv_usuario'); usuarioLogado=null; location.reload(); }
+window.addEventListener('load', ()=>{
+  const u = getLS('pdv_usuario', null);
+  if(u){
+    usuarioLogado = u;
+    document.getElementById('loginCard').style.display = 'none';
+    document.querySelector('.menu').style.display = 'block';
+    document.querySelector('main.content').style.display = 'block';
+    document.getElementById('userLabel').textContent = usuarioLogado.usuario + ' ('+usuarioLogado.nivel+')';
+    document.getElementById('userLabelMobile').textContent = usuarioLogado.usuario + ' ('+usuarioLogado.nivel+')';
+    document.getElementById('comissaoPctLabel').textContent = comissaoPadrao + '%';
+    toggleCard('dashboardCard');
+  }
+});
+
+/* ========= Dashboard ========= */
+let chart7 = null;
+function renderDashboard(){
+  // KPI hoje
+  const hoje = new Date().toDateString();
+  let vendasHoje = vendas.filter(v=> new Date(v.data).toDateString()===hoje );
+  const totalHoje = vendasHoje.reduce((a,b)=>a + Number(b.totalFinal||0), 0);
+  document.getElementById('dashVendasHoje').textContent = vendasHoje.length;
+  document.getElementById('dashFatHoje').textContent = money(totalHoje);
+  document.getElementById('dashClientes').textContent = clientes.length;
+  document.getElementById('dashProdutos').textContent = produtos.length;
+
+  // 7 dias
+  const labels=[], values=[];
+  for(let i=6;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.toDateString();
+    labels.push(d.toLocaleDateString());
+    values.push( vendas.filter(v => new Date(v.data).toDateString()===ds)
+                      .reduce((a,b)=>a+Number(b.totalFinal||0),0) );
+  }
+  const ctx = document.getElementById('chart7dias');
+  if(chart7) chart7.destroy();
+  chart7 = new Chart(ctx,{type:'line', data:{labels, datasets:[{label:'Faturamento', data:values, tension:.3}]}});
+}
+
+/* ========= Produtos ========= */
+function limparFormProduto(){
+  document.getElementById('pNome').value='';
+  document.getElementById('pPreco').value='';
+  document.getElementById('pQtd').value='';
+}
 function salvarProduto(){
-  const nome = document.getElementById('nomeProduto').value.trim();
-  const desc = document.getElementById('descricaoProduto').value.trim();
-  const codigo = document.getElementById('codigoProduto').value.trim();
-  const preco = parseFloat(document.getElementById('precoProduto').value);
-  const est = parseInt(document.getElementById('estoqueProduto').value);
-  if(!nome || isNaN(preco) || isNaN(est)){ alert('Preencha nome, preço e estoque'); return; }
-  // prevenir duplicados por codigo
-  if(codigo){
-    const dup = produtos.find((p,ix)=>p.codigo===codigo && ix!==editingIndex);
-    if(dup) return alert('Já existe produto com esse código');
-  }
-  if(editingIndex === null){
-    produtos.push({ id: Date.now(), nome, descricao: desc, codigo, preco, estoque: est });
+  const nome = document.getElementById('pNome').value.trim();
+  const preco = Number(document.getElementById('pPreco').value);
+  const qtd = Number(document.getElementById('pQtd').value || 0);
+
+  if(!nome || !preco){ alert('Preencha nome e preço'); return; }
+
+  const idx = produtos.findIndex(p=>p.nome.toLowerCase()===nome.toLowerCase());
+  if(idx>=0){
+    produtos[idx].preco = preco;
+    produtos[idx].qtd = qtd;
   } else {
-    const p = produtos[editingIndex];
-    p.nome = nome; p.descricao = desc; p.codigo = codigo; p.preco = preco; p.estoque = est;
-    editingIndex = null;
+    produtos.push({id:uid(), nome, preco, qtd});
   }
   setLS('pdv_produtos', produtos);
-  renderProdutos();
-  ['nomeProduto','descricaoProduto','codigoProduto','precoProduto','estoqueProduto'].forEach(i=>document.getElementById(i).value='');
-  alert('Produto salvo!');
+  limparFormProduto();
+  renderProdutos(); preencherSelectProdutos();
 }
-function editarProduto(i){
-  editingIndex = i;
-  const p = produtos[i];
-  document.getElementById('nomeProduto').value = p.nome || '';
-  document.getElementById('descricaoProduto').value = p.descricao || '';
-  document.getElementById('codigoProduto').value = p.codigo || '';
-  document.getElementById('precoProduto').value = p.preco || '';
-  document.getElementById('estoqueProduto').value = p.estoque || '';
-  toggleCard('produtosCard');
-}
-function deletarProduto(i){
-  if(!confirm('Excluir produto?')) return;
-  produtos.splice(i,1);
+function removerProduto(id){
+  if(!confirm('Remover produto?')) return;
+  produtos = produtos.filter(p=>p.id!==id);
   setLS('pdv_produtos', produtos);
-  renderProdutos();
+  renderProdutos(); preencherSelectProdutos();
+tr.innerHTML = `<td>${i+1}</td>
+<td>${p.nome}</td>
+<td>${money(p.preco)}</td>
+<td>${p.qtd ?? 0}</td>
+<td class="text-end">
+  <button class="btn btn-sm btn-outline-secondary me-1" onclick="editarProduto('${p.id}')"><i class="bi bi-pencil"></i></button>
+  <button class="btn btn-sm btn-outline-danger" onclick="removerProduto('${p.id}')"><i class="bi bi-trash"></i></button>
+</td>`;
+}
+function editarProduto(id){
+  const p = produtos.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('pNome').value = p.nome;
+  document.getElementById('pPreco').value = p.preco;
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 function renderProdutos(){
-  const tbody = document.getElementById('tProdutos');
-  tbody.innerHTML = '';
-  produtos.forEach((p,i)=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${p.codigo||''}</td><td>${p.nome}</td><td>${p.descricao||''}</td><td>${money(p.preco)}</td><td>${p.estoque}</td>
-      <td>
-        <button class="btn btn-sm btn-warning" onclick="editarProduto(${i})"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-sm btn-danger" onclick="deletarProduto(${i})"><i class="bi bi-trash"></i></button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-  // preencher select de vendas
-  const termo = (document.getElementById('buscaVenda')?.value||'').toLowerCase();
-  const sel = document.getElementById('selectProduto'); sel.innerHTML = '';
-  produtos.filter(p => {
-    const alvo = `${p.nome} ${p.descricao||''} ${p.codigo||''}`.toLowerCase();
-    return !termo || alvo.includes(termo);
-  }).forEach(p => sel.innerHTML += `<option value="${p.id}">${p.nome} - ${money(p.preco)} (${p.estoque})</option>`);
+  const busca = (document.getElementById('buscaProduto')?.value || '').toLowerCase();
+  const tbody = document.getElementById('tProdutos'); tbody.innerHTML='';
+  produtos.filter(p=>p.nome.toLowerCase().includes(busca))
+    .forEach((p,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${i+1}</td><td>${p.nome}</td><td>${money(p.preco)}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-secondary me-1" onclick="editarProduto('${p.id}')"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-outline-danger" onclick="removerProduto('${p.id}')"><i class="bi bi-trash"></i></button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
 }
 
-/* Filtro tabela produtos */
-function filtrarTabelaProdutos(){
-  const termo = (document.getElementById('buscaProduto')?.value||'').toLowerCase();
-  document.querySelectorAll('#tProdutos tr').forEach(tr=>{
-    const txt = tr.textContent.toLowerCase();
-    tr.style.display = termo && !txt.includes(termo) ? 'none' : '';
-  });
-}
-
-/* ----------------- Clientes ----------------- */
+/* ========= Clientes ========= */
+function limparFormCliente(){ ['cNome','cTelefone','cEmail'].forEach(id=>document.getElementById(id).value=''); }
 function salvarCliente(){
-  const nome = document.getElementById('cliNome').value.trim();
-  const telefone = document.getElementById('cliTelefone').value.trim();
-  const cpf = document.getElementById('cliCpf').value.trim();
-  const email = document.getElementById('cliEmail').value.trim();
-  const obs = document.getElementById('cliObs').value.trim();
-  if(!nome){ alert('Informe o nome.'); return; }
-  const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-  clientes.push({ id, nome, telefone, cpf, email, obs, compras: 0 });
+  const nome = document.getElementById('cNome').value.trim();
+  const telefone = document.getElementById('cTelefone').value.trim();
+  const email = document.getElementById('cEmail').value.trim();
+  if(!nome){ alert('Informe o nome'); return; }
+  const idx = clientes.findIndex(c=>c.nome.toLowerCase()===nome.toLowerCase());
+  if(idx>=0) clientes[idx] = {nome, telefone, email};
+  else clientes.push({nome, telefone, email});
   setLS('pdv_clientes', clientes);
-  listarClientes();
-  // reset form
-  ['cliNome','cliTelefone','cliCpf','cliEmail','cliObs'].forEach(i=>document.getElementById(i).value='');
-  // atualizar select de clientes em Vendas
-  preencherSelectClientes();
-  alert('Cliente salvo!');
+  limparFormCliente(); listarClientes(); preencherSelectClientes(); renderDashboard();
 }
-function removerCliente(id){
+function removerCliente(nome){
   if(!confirm('Remover cliente?')) return;
-  clientes = clientes.filter(c=>c.id !== id);
+  clientes = clientes.filter(c=>c.nome!==nome);
   setLS('pdv_clientes', clientes);
-  listarClientes();
-  preencherSelectClientes();
+  listarClientes(); preencherSelectClientes(); renderDashboard();
+}
+function editarCliente(nome){
+  const c = clientes.find(x=>x.nome===nome);
+  if(!c) return;
+  document.getElementById('cNome').value = c.nome;
+  document.getElementById('cTelefone').value = c.telefone||'';
+  document.getElementById('cEmail').value = c.email||'';
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 function listarClientes(){
-  const tb = document.getElementById('tbClientes');
-  tb.innerHTML = '';
-  clientes.forEach(c=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${c.nome}</td><td>${c.telefone||'-'}</td><td>${c.cpf||'-'}</td><td>${c.email||'-'}</td><td>${c.compras||0}</td>
-      <td class="text-nowrap">
-        <button class="btn btn-sm btn-outline-primary me-1" onclick="verHistoricoCliente('${c.id}')"><i class="bi bi-clock-history"></i></button>
-        <button class="btn btn-sm btn-outline-danger" onclick="removerCliente('${c.id}')"><i class="bi bi-trash"></i></button>
+  const busca = (document.getElementById('buscaCliente')?.value || '').toLowerCase();
+  const tbody = document.getElementById('tClientes'); tbody.innerHTML='';
+  clientes.filter(c=>c.nome.toLowerCase().includes(busca))
+    .forEach((c,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${i+1}</td><td>${c.nome}</td><td>${c.telefone||'-'}</td><td>${c.email||'-'}</td>
+      <td class="text-end">
+        <button class="btn btn-sm btn-outline-secondary me-1" onclick="editarCliente('${c.nome.replace(/'/g,"\\'")}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="removerCliente('${c.nome.replace(/'/g,"\\'")}')"><i class="bi bi-trash"></i></button>
       </td>`;
-    tb.appendChild(tr);
+      tbody.appendChild(tr);
+    });
+}
+
+/* ========= Seletores para vendas ========= */
+function preencherSelectProdutos(){
+  const sel = document.getElementById('selProduto'); sel.innerHTML='';
+  produtos.forEach(p=>{
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = `${p.nome} — ${money(p.preco)}`;
+    sel.appendChild(opt);
   });
 }
 function preencherSelectClientes(){
-  const sel = document.getElementById('selectCliente');
-  sel.innerHTML = `<option value="">Não vincular</option>`;
-  clientes.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome} ${c.telefone?('- '+c.telefone):''}</option>`);
-}
-function verHistoricoCliente(id){
-  const c = clientes.find(x=>x.id===id);
-  if(!c){ alert('Cliente não encontrado'); return; }
-  toggleCard('historico');
-  const vendasCli = historico.filter(h=>h.clienteId === id);
-  let html = `<div class="fw-semibold mb-2">Histórico de ${c.nome}</div>`;
-  if(vendasCli.length===0) html += '<div class="text-muted">Sem vendas vinculadas.</div>';
-  else vendasCli.forEach(h=>{
-    const data = new Date(h.data||Date.now()).toLocaleString('pt-BR');
-    html += `<div class="border rounded p-2 mb-2"><div><b>${h.id||'-'}</b> — ${data} — <b>Total:</b> ${money(h.total||0)}</div>
-      <div class="small text-muted">${(h.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(', ')}</div></div>`;
+  const sel = document.getElementById('selCliente'); sel.innerHTML='';
+  const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent='Consumidor final'; sel.appendChild(opt0);
+  clientes.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.nome; opt.textContent = c.nome;
+    sel.appendChild(opt);
   });
-  document.getElementById('listaHistorico').innerHTML = html;
 }
 
-/* ----------------- Carrinho e Vendas ----------------- */
-let carrinho = [], total = 0;
-function adicionarCarrinho(){
-  const sel = document.getElementById('selectProduto');
-  const idSel = sel && sel.value ? Number(sel.value) : null;
-  const qtd = parseInt(document.getElementById('quantidadeVenda').value) || 1;
-  const p = produtos.find(x=>x.id===idSel);
-  if(!p) return alert('Selecione um produto');
-  if(qtd<=0) return;
-  if(p.estoque < qtd) return alert('Estoque insuficiente');
-  let ex = carrinho.find(c=>c.id===p.id);
-  if(ex){ if(ex.qtd + qtd > p.estoque) return alert('Estoque insuficiente'); ex.qtd += qtd; }
-  else carrinho.push({ id: p.id, nome: p.nome, preco: p.preco, qtd });
+/* ========= Carrinho / Vendas ========= */
+function adicionarProdutoCarrinho(){
+  const id = document.getElementById('selProduto').value;
+  const qtd = Math.max(1, Number(document.getElementById('qtd').value||1));
+  const p = produtos.find(x=>x.id===id);
+  if(!p) return;
+  const idx = carrinho.findIndex(i=>i.id===id);
+  if(idx>=0){ carrinho[idx].qtd += qtd; }
+  else carrinho.push({id:p.id, nome:p.nome, preco:Number(p.preco), qtd});
+  setLS('pdv_carrinho', carrinho);
+  document.getElementById('qtd').value = 1;
   renderCarrinho();
 }
-function renderCarrinho(){
-  const ul = document.getElementById('listaCarrinho');
-  ul.innerHTML = '';
-  total = 0;
-  carrinho.forEach((c,i)=>{
-    total += c.preco * c.qtd;
-    const li = document.createElement('li');
-    li.className = 'list-group-item d-flex justify-content-between align-items-center';
-    li.innerHTML = `${c.nome} x ${c.qtd} - ${money(c.preco)} <button class="btn btn-sm btn-danger" onclick="removerCarrinho(${i})">x</button>`;
-    ul.appendChild(li);
-  });
-  document.getElementById('total').textContent = money(total);
-  calcularTroco();
-}
-function removerCarrinho(i){ carrinho.splice(i,1); renderCarrinho(); }
-
-function buscarPorBarrasVendas(e){
-  if(e.key === 'Enter'){
-    const codigo = e.target.value.trim();
-    if(!codigo) return;
-    adicionarPorCodigo(codigo);
-    e.target.value = '';
-  }
-}
-function adicionarPorCodigo(codigo, qtd = 1){
-  const p = produtos.find(x => (x.codigo||'') === codigo);
-  if(!p) return alert('Produto não encontrado pelo código');
-  if(p.estoque < qtd) return alert('Estoque insuficiente');
-  let ex = carrinho.find(c=>c.id===p.id);
-  if(ex){ if(ex.qtd + qtd > p.estoque) return alert('Estoque insuficiente'); ex.qtd += qtd; } 
-  else carrinho.push({ id: p.id, nome: p.nome, preco: p.preco, qtd });
+function editarQtd(i){
+  const nova = Number(prompt('Quantidade:', carrinho[i].qtd));
+  if(!nova || nova<=0) return;
+  carrinho[i].qtd = Math.floor(nova);
+  setLS('pdv_carrinho', carrinho);
   renderCarrinho();
 }
-
-function toggleTroco(){
-  const isDin = document.getElementById('formaPagamento').value === 'dinheiro';
-  document.getElementById('pagamentoDinheiro').style.display = isDin ? 'block' : 'none';
-  calcularTroco();
+function removerCarrinho(i){
+  carrinho.splice(i,1);
+  setLS('pdv_carrinho', carrinho);
+  renderCarrinho();
+}
+function totalDoCarrinho(){
+  return carrinho.reduce((a,b)=>a + b.preco*b.qtd, 0);
 }
 function calcularTroco(){
-  if(document.getElementById('formaPagamento').value !== 'dinheiro'){
-    document.getElementById('troco').textContent = money(0); return;
-  }
-  const pago = parseFloat(document.getElementById('valorPago').value) || 0;
-  const troco = Math.max(0, pago - total);
+  const desconto = Number(document.getElementById('desconto').value||0);
+  const acrescimo = Number(document.getElementById('acrescimo').value||0);
+  const valorPago = Number(document.getElementById('valorPago').value||0);
+  const totalBase = totalDoCarrinho();
+  const totalFinal = Math.max(0, totalBase - desconto + acrescimo);
+  const troco = Math.max(0, valorPago - totalFinal);
   document.getElementById('troco').textContent = money(troco);
+  // comissão
+  const comiss = totalFinal * (Number(comissaoPadrao)/100);
+  document.getElementById('comissaoValor').textContent = money(comiss);
+  return { totalFinal, troco, comiss };
 }
-
-function finalizarVenda(){
-  if(carrinho.length === 0) return alert('Carrinho vazio');
-  const forma = document.getElementById('formaPagamento').value;
-  let pago = total, troco = 0;
-  if(forma === 'dinheiro'){
-    pago = parseFloat(document.getElementById('valorPago').value);
-    if(isNaN(pago) || pago < total) return alert('Valor pago insuficiente');
-    troco = pago - total;
-    caixa.saldo += total;
-    caixa.movs.unshift({ id: Date.now(), tipo: 'entrada', valor: total, desc: 'Venda balcão', data: new Date().toISOString() });
-    setLS('pdv_caixa', caixa);
-  }
-  // baixa estoque
-  carrinho.forEach(it => {
-    const p = produtos.find(x => x.id === it.id);
-    if(p) p.estoque -= it.qtd;
-  });
-  setLS('pdv_produtos', produtos);
-  // montar venda
-  const clienteId = document.getElementById('selectCliente').value || null;
-  const clienteObj = clientes.find(c=>c.id === clienteId);
-  const venda = {
-    id: Date.now(),
-    data: new Date().toISOString(),
-    itens: JSON.parse(JSON.stringify(carrinho)),
-    total,
-    pago,
-    troco,
-    forma,
-    clienteId,
-    clienteNome: clienteObj ? clienteObj.nome : null
-  };
-  historico.unshift(venda);
-  setLS('pdv_hist', historico);
-  // incrementar contador de compras do cliente
-  if(clienteObj){
-    clienteObj.compras = (clienteObj.compras || 0) + 1;
-    setLS('pdv_clientes', clientes);
-    listarClientes();
-  }
-  // registrar caixa
-  setLS('pdv_caixa', caixa);
-  // gerar cupom e limpar
-  verCupom(venda);
-  carrinho = []; renderCarrinho(); renderProdutos(); buildRelatorios(); renderHistorico();
-  toggleCard('comprovante');
-  alert('Venda registrada!');
-}
-
-/* ----------------- CUPOM / WHATSAPP ----------------- */
-let ultimoCupomTexto = '';
-function gerarTextoCupom(v){
-  const data = new Date(v.data||Date.now()).toLocaleString('pt-BR');
-  let s = '*** PDV COSMÉTICOS ***\\n';
-  s += 'Data: ' + data + '\\n';
-  if(v.clienteNome) s += 'Cliente: ' + v.clienteNome + '\\n';
-  s += '-----------------------------\\n';
-  (v.itens||[]).forEach(i=> s += `${i.nome}  x${i.qtd||1}  ${money(i.preco||0)}\\n`);
-  s += '-----------------------------\\n';
-  s += 'TOTAL: ' + money(v.total||0) + '\\n';
-  s += '\\nObrigado pela preferência!';
-  return s;
-}
-function verCupom(v){
-  const txt = gerarTextoCupom(v);
-  ultimoCupomTexto = txt;
-  document.getElementById('cupom').textContent = txt;
-}
-function enviarWhatsApp(){
-  const tel = (document.getElementById('wppTelefone').value||'').replace(/\\D/g,'');
-  if(!tel) return alert('Informe o telefone com DDD.');
-  if(!ultimoCupomTexto) return alert('Abra um cupom no Histórico primeiro.');
-  const url = 'https://wa.me/55' + tel + '?text=' + encodeURIComponent(ultimoCupomTexto);
-  window.open(url, '_blank');
-}
-
-/* ----------------- HISTÓRICO ----------------- */
-function renderHistorico(){
-  const cont = document.getElementById('listaHistorico');
-  cont.innerHTML = '';
-  if(historico.length === 0){ cont.innerHTML = '<div class="text-muted">Sem vendas registradas.</div>'; return; }
-  historico.slice().forEach(h=>{
-    const data = new Date(h.data||Date.now()).toLocaleString('pt-BR');
-    const div = document.createElement('div');
-    div.className = 'border rounded p-2 mb-2 d-flex justify-content-between align-items-center';
-    div.innerHTML = `<div>
-        <div><b>${h.id}</b> — ${data} — <b>Total:</b> ${money(h.total||0)}</div>
-        <div class="small text-muted">${(h.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(', ')}</div>
-      </div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-secondary" onclick='verCupom(${JSON.stringify(h)}); toggleCard("comprovante")'><i class="bi bi-ticket-perforated"></i></button>
-      </div>`;
-    cont.appendChild(div);
-  });
-}
-
-/* ----------------- CAIXA ----------------- */
-function renderCaixa(){
-  document.getElementById('saldoCaixa').textContent = money(caixa.saldo || 0);
-  const ul = document.getElementById('listaCaixa');
-  ul.innerHTML = '';
-  (caixa.movs||[]).forEach(m=>{
+function renderCarrinho(){
+  const ul = document.getElementById('listaCarrinho'); ul.innerHTML='';
+  carrinho.forEach((it,i)=>{
     const li = document.createElement('li');
-    li.className = 'list-group-item d-flex justify-content-between';
-    li.innerHTML = `<span>${new Date(m.data).toLocaleString('pt-BR')} — ${m.tipo.toUpperCase()} — ${m.desc||'-'}</span><strong>${money(m.valor)}</strong>`;
+    li.className='list-group-item d-flex justify-content-between align-items-center';
+    li.innerHTML = `<div><b>${it.nome}</b> <span class="muted">x${it.qtd}</span><br><small>${money(it.preco)}</small></div>
+      <div>
+        <button class='btn btn-sm btn-outline-secondary me-1' onclick='editarQtd(${i})'><i class='bi bi-pencil'></i></button>
+        <button class='btn btn-sm btn-outline-danger' onclick='removerCarrinho(${i})'><i class='bi bi-trash'></i></button>
+      </div>`;
     ul.appendChild(li);
   });
+  document.getElementById('totalVenda').textContent = money(totalDoCarrinho());
+  calcularTroco();
 }
-
-/* ----------------- RELATÓRIOS ----------------- */
-let chartMes, chartFatMes, chartTopProdutos;
-function buildRelatorios(){
-  // KPI
-  const now = new Date();
-  const mes = now.getMonth();
-  const ano = now.getFullYear();
-  const vendasMes = historico.filter(h=>{
-    const d = new Date(h.data||Date.now());
-    return d.getMonth() === mes && d.getFullYear() === ano;
-  });
-  const totalMes = vendasMes.reduce((s,h)=>s + (h.total||0), 0);
-  document.getElementById('kpiVendasMes').textContent = vendasMes.length;
-  document.getElementById('kpiFatMes').textContent = money(totalMes);
-  document.getElementById('kpiClientes').textContent = clientes.length;
-  document.getElementById('kpiProdutos').textContent = produtos.length;
-
-  // Dashboard últimos 6 meses
-  const mapa6 = {};
-  for(let i=5;i>=0;i--){
-    const d = new Date(ano, mes - i, 1);
-    mapa6[d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'})] = 0;
-  }
-  historico.forEach(h=>{
-    const d = new Date(h.data||Date.now());
-    const key = d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'});
-    if(key in mapa6) mapa6[key] += (h.total||0);
-  });
-  if(chartMes) chartMes.destroy();
-  chartMes = new Chart(document.getElementById('chartMes'), { type:'line', data:{ labels:Object.keys(mapa6), datasets:[{ label:'Faturamento', data:Object.values(mapa6) }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } } });
-
-  // Faturamento 12 meses
-  const mapa12 = {};
-  for(let i=11;i>=0;i--){
-    const d = new Date(ano, mes - i, 1);
-    mapa12[d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'})] = 0;
-  }
-  historico.forEach(h=>{
-    const d = new Date(h.data||Date.now());
-    const key = d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'});
-    if(key in mapa12) mapa12[key] += (h.total||0);
-  });
-  if(chartFatMes) chartFatMes.destroy();
-  chartFatMes = new Chart(document.getElementById('chartFatMes'), { type:'bar', data:{ labels:Object.keys(mapa12), datasets:[{ label:'Faturamento', data:Object.values(mapa12) }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true } } } });
-
-  // Top produtos
-  const contagem = {};
-  historico.forEach(h => (h.itens||[]).forEach(i => contagem[i.nome] = (contagem[i.nome]||0) + (i.qtd||1)));
-  const top = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  if(chartTopProdutos) chartTopProdutos.destroy();
-  chartTopProdutos = new Chart(document.getElementById('chartTopProdutos'), { type:'bar', data:{ labels: top.map(t=>t[0]), datasets:[{ label:'Quantidade', data: top.map(t=>t[1]) }] }, options:{ indexAxis:'y', responsive:true, scales:{ x:{ beginAtZero:true } } } });
-}
-
-/* ----------------- Exportar Relatório CSV ----------------- */
-function exportarRelatorioCSV(){
-  if(historico.length===0) return alert('Sem vendas para exportar');
-  let csv = "Data,Produto,Quantidade,Preço Unitário,Total,Forma,Cliente\n";
-  historico.forEach(h=>{
-    (h.itens||[]).forEach(i=>{
-      csv += `"${new Date(h.data).toLocaleString('pt-BR')}", "${i.nome}", ${i.qtd}, ${i.preco}, ${i.qtd * i.preco}, ${h.forma}, "${h.clienteNome||''}"\n`;
-    });
-  });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'relatorio_vendas.csv'; a.click();
-}
-
-/* ----------------- BACKUP ----------------- */
-function exportarBackup(){
-  const dados = { produtos, historico, caixa, clientes };
-  const blob = new Blob([JSON.stringify(dados,null,2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'backup_pdv.json';
-  a.click();
-}
-function importarBackup(event){
-  const file = event.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try{
-      const dados = JSON.parse(e.target.result);
-      if(dados.produtos) setLS('pdv_produtos', dados.produtos);
-      if(dados.historico) setLS('pdv_hist', dados.historico);
-      if(dados.caixa) setLS('pdv_caixa', dados.caixa);
-      if(dados.clientes) setLS('pdv_clientes', dados.clientes);
-      alert('Backup restaurado com sucesso! Recarregando...');
-      location.reload();
-    } catch(err){ alert('Arquivo inválido de backup.'); }
+function finalizarVenda(){
+  if(carrinho.length===0){ alert('Carrinho vazio'); return; }
+  const { totalFinal, comiss } = calcularTroco();
+  const venda = {
+    id: uid(),
+    data: new Date().toISOString(),
+    itens: carrinho.map(i=>({id:i.id,nome:i.nome,preco:i.preco,qtd:i.qtd})),
+    total: totalDoCarrinho(),
+    desconto: Number(document.getElementById('desconto').value||0),
+    acrescimo: Number(document.getElementById('acrescimo').value||0),
+    totalFinal,
+    pagamento: document.getElementById('pagamento').value,
+    cliente: document.getElementById('selCliente').value || 'Consumidor final',
+    vendedor: (usuarioLogado?.usuario)||'—',
+    commission: comiss
   };
-  reader.readAsText(file);
+  vendas.unshift(venda);
+  setLS('pdv_vendas', vendas);
+// Atualiza estoque dos produtos
+venda.itens.forEach(item=>{
+  const prod = produtos.find(p=>p.id===item.id);
+  if(prod){
+    prod.qtd = (prod.qtd || 0) - item.qtd;
+    if(prod.qtd <= 0){
+      prod.qtd = 0;
+      alert(`⚠️ Estoque do produto "${prod.nome}" acabou!`);
+    }
+  }
+});
+setLS('pdv_produtos', produtos);
+renderProdutos();
+
+  // Caixa automático (entrada)
+  caixa.unshift({ id: uid(), data: venda.data, tipo: 'Entrada', desc: `Venda ${venda.id.slice(-6)} (${venda.pagamento})`, valor: venda.totalFinal });
+  setLS('pdv_caixa', caixa);
+
+  // Gera cupom
+  gerarCupom(venda);
+
+  // Limpa carrinho
+  carrinho = [];
+  setLS('pdv_carrinho', carrinho);
+
+  // Reseta campos
+  document.getElementById('desconto').value = 0;
+  document.getElementById('acrescimo').value = 0;
+  document.getElementById('valorPago').value = 0;
+
+  // Atualiza telas
+  renderCarrinho(); renderDashboard(); renderHistorico(); renderCaixa();
+  toggleCard('comprovanteCard');
+}
+function gerarCupom(v){
+  let linhas = [];
+  linhas.push('DRICCA COSMÉTICOS');
+  linhas.push('------------------------------');
+  linhas.push('Data: ' + new Date(v.data).toLocaleString());
+  linhas.push('Cliente: ' + v.cliente);
+  linhas.push('Vendedor: ' + v.vendedor);
+  linhas.push('------------------------------');
+  v.itens.forEach(i=>{
+    linhas.push(`${i.nome}`);
+    linhas.push(`  ${i.qtd} x ${money(i.preco)} = ${money(i.preco*i.qtd)}`);
+  });
+  linhas.push('------------------------------');
+  linhas.push(`Subtotal: ${money(v.total)}`);
+  if(v.desconto) linhas.push(`Desconto: - ${money(v.desconto)}`);
+  if(v.acrescimo) linhas.push(`Acréscimo: + ${money(v.acrescimo)}`);
+  linhas.push(`TOTAL: ${money(v.totalFinal)}`);
+  linhas.push(`Pagamento: ${v.pagamento}`);
+  linhas.push(`Comissão (${comissaoPadrao}%): ${money(v.commission)}`);
+  linhas.push('------------------------------');
+  linhas.push('Obrigado pela preferência!');
+  document.getElementById('cupom').textContent = linhas.join('\n');
+}
+function gerarCupomRecuperar(id){
+  const v = vendas.find(x=>x.id===id);
+  if(!v) return;
+  gerarCupom(v);
+  toggleCard('comprovanteCard');
 }
 
-/* ----------------- PWA: registrar service worker ----------------- */
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=> {
-    navigator.serviceWorker.register('./service-worker.js').catch(()=>{/* falha silenciosa */});
+/* ========= Histórico ========= */
+function renderHistorico(){
+  const tbody = document.getElementById('tHistorico'); tbody.innerHTML='';
+  vendas.forEach(v=>{
+    const itens = v.itens.map(i=>i.nome+' x'+i.qtd).join(', ');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${new Date(v.data).toLocaleString()}</td>
+      <td>${itens}</td>
+      <td>${money(v.totalFinal)}</td>
+      <td>${v.pagamento}</td>
+      <td>${v.vendedor}</td>
+      <td>${money(v.commission||0)}</td>
+      <td><button class='btn btn-sm btn-outline-secondary' title='Cupom' onclick='gerarCupomRecuperar("${v.id}")'><i class="bi bi-printer"></i></button></td>`;
+    tbody.appendChild(tr);
   });
 }
 
-/* ----------------- Inicialização ----------------- */
-function init(){
-  toggleCard('dashboardCard');
-  renderProdutos();
-  listarClientes();
-  preencherSelectClientes();
-  renderHistorico();
+/* ========= Caixa ========= */
+function registrarCaixa(){
+  const tipo = document.getElementById('cxTipo').value;
+  const desc = document.getElementById('cxDesc').value.trim();
+  const valor = Number(document.getElementById('cxValor').value);
+  if(!valor || !desc){ alert('Informe descrição e valor'); return; }
+  caixa.unshift({ id:uid(), data:new Date().toISOString(), tipo, desc, valor: (tipo==='Saída'?-Math.abs(valor):Math.abs(valor)) });
+  setLS('pdv_caixa', caixa);
+  document.getElementById('cxDesc').value=''; document.getElementById('cxValor').value='';
   renderCaixa();
-  buildRelatorios();
 }
-init();
+function removerCaixa(id){
+  if(!confirm('Remover lançamento?')) return;
+  caixa = caixa.filter(c=>c.id!==id); setLS('pdv_caixa', caixa); renderCaixa();
+}
+function renderCaixa(){
+  const tbody = document.getElementById('tCaixa'); tbody.innerHTML='';
+  let saldo = 0;
+  caixa.forEach(c=>{
+    saldo += Number(c.valor||0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${new Date(c.data).toLocaleString()}</td>
+      <td>${c.tipo}</td>
+      <td>${c.desc}</td>
+      <td>${money(c.valor)}</td>
+      <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="removerCaixa('${c.id}')"><i class="bi bi-trash"></i></button></td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('cxSaldo').textContent = money(saldo);
+}
 
+/* ========= Relatórios ========= */
+let chartPagto = null;
+function renderChartPagto(){
+  const m = {Dinheiro:0, Pix:0, Crédito:0, Débito:0};
+  const limite = new Date(); limite.setDate(limite.getDate()-30);
+  vendas.filter(v=> new Date(v.data)>=limite)
+    .forEach(v=>{ m[v.pagamento] = (m[v.pagamento]||0) + Number(v.totalFinal||0); });
+  const ctx = document.getElementById('chartPagto');
+  if(chartPagto) chartPagto.destroy();
+  chartPagto = new Chart(ctx,{type:'bar', data:{labels:Object.keys(m), datasets:[{label:'R$', data:Object.values(m)}]}} );
+}
+function renderRelComissao(){
+  const limite = new Date(); limite.setDate(limite.getDate()-30);
+  const total = vendas.filter(v=> new Date(v.data)>=limite)
+    .reduce((a,b)=>a + Number(b.commission||0), 0);
+  document.getElementById('relComissaoTotal').textContent = money(total);
+  document.getElementById('relComissaoPct').textContent = comissaoPadrao + '%';
+}
+
+/* ========= Config / Usuários ========= */
+function salvarConfig(){
+  comissaoPadrao = Number(document.getElementById('cfgComissao').value||5);
+  localStorage.setItem('pdv_comissao', comissaoPadrao);
+  document.getElementById('comissaoPctLabel').textContent = comissaoPadrao + '%';
+  alert('Configurações salvas.');
+}
+function adicionarUsuario(){
+  const usuario = document.getElementById('uUsuario').value.trim();
+  const senha = document.getElementById('uSenha').value.trim();
+  const nivel = document.getElementById('uNivel').value;
+  if(!usuario || !senha){ alert('Informe usuário e senha'); return; }
+  if(usuarios.find(u=>u.usuario===usuario)){ alert('Usuário já existe'); return; }
+  usuarios.push({usuario, senha, nivel});
+  setLS('pdv_usuarios', usuarios);
+  document.getElementById('uUsuario').value=''; document.getElementById('uSenha').value='';
+  renderUsuarios();
+}
+function removerUsuario(usuario){
+  if(usuario==='admin'){ alert('Não é permitido remover o admin padrão.'); return; }
+  if(!confirm('Remover usuário?')) return;
+  usuarios = usuarios.filter(u=>u.usuario!==usuario);
+  setLS('pdv_usuarios', usuarios);
+  renderUsuarios();
+}
+function renderUsuarios(){
+  const tbody = document.getElementById('tUsuarios'); tbody.innerHTML='';
+  usuarios.forEach((u,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${u.usuario}</td><td>${u.nivel}</td>
+      <td class="text-end">
+        <button class="btn btn-sm btn-outline-danger" onclick="removerUsuario('${u.usuario}')"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
 </script>
 </body>
 </html>
